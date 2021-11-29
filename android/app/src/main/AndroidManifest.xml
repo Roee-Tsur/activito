@@ -3,6 +3,10 @@
    <application
         android:label="activito"
         android:icon="@mipmap/ic_launcher">
+
+       <meta-data android:name="com.google.android.geo.API_KEY"
+           android:value="AIzaSyD6dJBBohjbCv1AqvPy4vUqLBCf6gNf7qA"/>
+
         <activity
             android:name=".MainActivity"
             android:launchMode="singleTop"
@@ -31,6 +35,7 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+
         </activity>
 
        <activity

@@ -14,17 +14,17 @@ class AuthService {
 
   static Future<UserCredential?> signInWithGoogle() async {
     GoogleSignInAccount? userGoogleLoginAccount =
-        await GoogleSignIn(scopes: ['email']).signIn();
+    await GoogleSignIn(scopes: ['email']).signIn();
 
     GoogleSignInAuthentication googleSignInAuth =
-        await userGoogleLoginAccount!.authentication;
+    await userGoogleLoginAccount!.authentication;
 
     AuthCredential authCredential = GoogleAuthProvider.credential(
         idToken: googleSignInAuth.idToken,
         accessToken: googleSignInAuth.accessToken);
 
     UserCredential userCredential =
-        await _firebaseAuth.signInWithCredential(authCredential);
+    await _firebaseAuth.signInWithCredential(authCredential);
 
     return userCredential;
   }
@@ -32,11 +32,12 @@ class AuthService {
   static Future<void> loginUser(String uid) async {
     final user = await Server.getUser(uid);
     _setCurrentUser(user);
+    await Server.initProfilePic();
   }
 
   static Future createAndLoginUser(String uid, String? email) async {
     if (email == null || email.isEmpty) email = "null";
-    final user = await Server.createUser(uid, email);
+    final user = await Server.createActivitoUser(uid, email);
     _setCurrentUser(user);
   }
 
@@ -51,10 +52,14 @@ class AuthService {
     currentUser = null;
   }
 
-  static checkAndLoginUser() async {
-    if(_firebaseAuth.currentUser != null)
+  static initUser() async {
+    if (_firebaseAuth.currentUser != null)
       await loginUser(_firebaseAuth.currentUser!.uid);
+
+    Server.initProfilePic();
   }
 
   static String getCurrentUserId() => currentUser!.id;
+
+  static bool isUserConnected() => currentUser != null;
 }

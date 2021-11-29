@@ -4,6 +4,8 @@ import 'package:activito/services/AuthService.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
+import 'services/Server.dart';
+
 void main() async {
   await initializeApp();
   runApp(MyApp());
@@ -12,7 +14,7 @@ void main() async {
 Future<void> initializeApp() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  await AuthService.checkAndLoginUser();
+  await AuthService.initUser();
 }
 
 class MyApp extends StatelessWidget {

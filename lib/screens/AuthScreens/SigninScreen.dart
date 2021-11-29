@@ -81,8 +81,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void createUserSkipSignUp(String id, String? email) async {
     await AuthService.createAndLoginUser(id, email!);
-    Navigator.push(context,
+    final results = Navigator.push(context,
         MaterialPageRoute(builder: (context) => ProfileImagePickerScreen()));
+    Navigator.pop(context, results);
   }
 
   continueToSignUpScreen() async {

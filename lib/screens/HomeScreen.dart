@@ -1,12 +1,23 @@
+import 'dart:io';
+
 import 'package:activito/models/Lobby.dart';
+import 'package:activito/models/LobbySession.dart';
+import 'package:activito/models/LobbyUser.dart';
+import 'package:activito/models/UserLocation.dart';
 import 'package:activito/screens/AuthScreens/ProfileImagePickerScreen.dart';
 import 'package:activito/screens/AuthScreens/SigninScreen.dart';
 import 'package:activito/screens/LobbyScreen.dart';
+import 'package:activito/screens/UserLocationScreen.dart';
 import 'package:activito/services/AuthService.dart';
+import 'package:activito/services/CustomWidgets.dart';
+import 'package:activito/services/Globals.dart';
 import 'package:activito/services/Server.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:location/location.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 typedef VoidCallback = void Function();
 
@@ -27,7 +38,10 @@ class HomeScreen extends StatelessWidget {
 
 class HomeScreenBody extends StatelessWidget {
   final lobbyCodeController = TextEditingController();
-  final userNameController = TextEditingController();
+  final userNameController = TextEditingController(
+      text: AuthService.isUserConnected()
+          ? AuthService.currentUser!.nickName
+          : '');
   final formKey = GlobalKey<FormState>();
 
   @override
@@ -95,32 +109,80 @@ class HomeScreenBody extends StatelessWidget {
   actionButtonPressed(BuildContext context, String action) async {
     if (!formKey.currentState!.validate()) return;
     String userName = userNameController.value.text;
-    Lobby? joinedLobby;
+    LobbySession? lobbySession;
 
-    if (action == "join") joinedLobby = await joinLobbyButtonPressed(userName);
+    if (action == "join") lobbySession = await joinLobbyButtonPressed(userName);
     if (action == "create")
-      joinedLobby = await createLobbyButtonPressed(userName);
+      lobbySession = await createLobbyButtonPressed(userName, context);
 
-    openLobbyScreen(context, joinedLobby);
+    openUserLocationScreen(context, lobbySession!);
   }
 
-  Future<Lobby?> joinLobbyButtonPressed(String userName) async {
+  Future<LobbySession> joinLobbyButtonPressed(String nickName) async {
     String enteredCode = lobbyCodeController.value.text;
-    return await Server.joinLobby(enteredCode, userName);
+    LobbyUser lobbyUser = LobbyUser(name: nickName);
+    return await Server.joinLobby(
+        enteredCode: enteredCode, lobbyUser: lobbyUser);
   }
 
-  Future<Lobby?> createLobbyButtonPressed(String userName) async {
-    return await Server.createLobby(userName);
+  Future<LobbySession> createLobbyButtonPressed(
+      String nickName, BuildContext context) async {
+    String lobbyType = await CustomWidgets.showTwoOptionDialog(
+        context: context,
+        mainTitle: "What are you looking for?",
+        title1: 'something to eat or drink',
+        title2: "other activities",
+        icon1: Icons.fastfood,
+        icon2: Icons.local_activity,
+        onTap1: () => Navigator.pop(context, 'food'),
+        onTap2: () => Fluttertoast.showToast(msg: 'Under construction'));
+    LobbyUser lobbyUser = LobbyUser(name: nickName, isLeader: true);
+    return await Server.createLobby(lobbyType: lobbyType, lobbyUser: lobbyUser);
   }
 
   void friendsButtonPressed() {}
 
   void settingsButtonPressed() {}
 
-  void openLobbyScreen(BuildContext context, Lobby? joinedLobby) {
-    if (joinedLobby != null)
-      Navigator.push(context,
-          MaterialPageRoute(builder: (context) => LobbyScreen(joinedLobby)));
+  Future<void> openUserLocationScreen(
+      BuildContext context, LobbySession lobbySession) async {
+    if (await Permission.locationWhenInUse.isGranted) {
+      UserLocation currentUserLocation =
+          UserLocation.fromDynamic(await Location.instance.getLocation());
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) =>
+                  UserLocationScreen(lobbySession, currentUserLocation)));
+    } else {
+      await showGeneralDialog(
+          context: context,
+          pageBuilder: (context, _, __) {
+            return Center(
+                child: Card(
+                    child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                    "${Globals.appName} needs access to your location, the app won't work without it",textAlign: TextAlign.center,),
+                TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text('continue'))
+              ],
+            )));
+          });
+      if (await Permission.locationWhenInUse.request().isGranted) {
+        UserLocation currentUserLocation = UserLocation.fromDynamic(
+            await Location.instance.getLocation());
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) =>
+                    UserLocationScreen(lobbySession, currentUserLocation)));
+      } else
+        return;
+    }
   }
 }
 
@@ -131,20 +193,16 @@ class AuthLeadingAppBarWidget extends StatefulWidget {
 }
 
 class _AuthLeadingAppBarWidgetState extends State<AuthLeadingAppBarWidget> {
-  late Widget authLeadingAppBarWidget;
-
-  _AuthLeadingAppBarWidgetState() {
-    determineWidget();
-  }
+  late Widget leadingWidget;
 
   @override
   Widget build(BuildContext context) {
     determineWidget();
-    return TextButton(onPressed: _onPressed, child: authLeadingAppBarWidget);
+    return TextButton(onPressed: _onPressed, child: leadingWidget);
   }
 
   _onPressed() async {
-    if ((authLeadingAppBarWidget as Text).data == "login") {
+    if ((leadingWidget as Text).data == "login") {
       final isUserConnected = await Navigator.push(
           context,
           MaterialPageRoute(
@@ -156,26 +214,20 @@ class _AuthLeadingAppBarWidgetState extends State<AuthLeadingAppBarWidget> {
   }
 
   void determineWidget() {
-    if (AuthService.currentUser == null)
-      this.authLeadingAppBarWidget = getLogInWidget();
+    if (AuthService.isUserConnected())
+      this.leadingWidget = getUserConnectedWidget();
     else
-      this.authLeadingAppBarWidget = getUseConnectedWidget();
+      this.leadingWidget = getLogInWidget();
   }
 
-  Widget getUseConnectedWidget() => PopupMenuButton(
+  Widget getUserConnectedWidget() => PopupMenuButton(
       child: FutureBuilder(
         future: Server.getCurrentUserProfilePic(),
         builder: (BuildContext context, AsyncSnapshot<Image> snapshot) {
           if (snapshot.connectionState == ConnectionState.done) {
-            final data = snapshot.data;
-            if (data != null)
-              return CircleAvatar(
-                backgroundImage: data.image,
-              );
-            else
-              return CircleAvatar(
-                  backgroundImage:
-                      Image.asset("assets/defaultProfilePic.jpg").image);
+            return CircleAvatar(
+              backgroundImage: snapshot.data!.image,
+            );
           } else {
             return CircleAvatar(
                 backgroundImage:
@@ -190,12 +242,11 @@ class _AuthLeadingAppBarWidgetState extends State<AuthLeadingAppBarWidget> {
           });
         }
         if (value == "profilePic") {
-          final isProfilePidUpdated = await Navigator.push(
+          final isProfilePicUpdated = await Navigator.push(
               context,
               MaterialPageRoute(
                   builder: (context) => ProfileImagePickerScreen()));
-          if (isProfilePidUpdated)
-            setState(() {});
+          if (isProfilePicUpdated) setState(() {});
         }
       },
       itemBuilder: (BuildContext context) => [
@@ -209,7 +260,7 @@ class _AuthLeadingAppBarWidgetState extends State<AuthLeadingAppBarWidget> {
             )
           ]);
 
-  Widget getLogInWidget() => this.authLeadingAppBarWidget = Text(
+  Widget getLogInWidget() => this.leadingWidget = Text(
         "login",
         style: TextStyle(color: Colors.black),
       );

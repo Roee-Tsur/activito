@@ -1,9 +1,11 @@
 export class Lobby {
+    id: string;
     lobbyCode: string;
-    users: string[];
+    lobbyType: string;
 
-    constructor(lobbyCode: string, users: string[]) {
+    constructor(id: string, lobbyCode: string, lobbyType: string) {
+        this.id = id;
         this.lobbyCode = lobbyCode;
-        this.users = users;
+        this.lobbyType = lobbyType;
     }
 }

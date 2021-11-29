@@ -1,11 +1,17 @@
+///in firestore each Lobby has a collection of users (LobbyUser)
 class Lobby {
+  late String id;
+  ///"food" or "other"
+  late String lobbyType;
   late String lobbyCode;
-  late List<String> users;
 
-  Lobby(this.lobbyCode, this.users);
+  Lobby(this.lobbyCode, this.lobbyType);
 
-  Lobby.fromJson(Map<String, dynamic> json)
-      : this(json['lobbyCode'] as String, json['users'] as List<String>);
+  Lobby.fromJson(Map<String, dynamic> json) {
+    this.id = json["id"];
+    this.lobbyType = json['lobbyType'];
+    this.lobbyCode = json['lobbyCode'];
+  }
 
-  Map<String, Object?> toJson() => {"lobbyCode": lobbyCode, "users": users};
+  Map<String, Object?> toJson() => {'id': id, "lobbyCode": lobbyCode, "lobbyType": lobbyType};
 }

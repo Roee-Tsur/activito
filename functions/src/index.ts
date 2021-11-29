@@ -5,17 +5,20 @@ import { Lobby } from "./models/Lobby";
 firebaseAdmin.initializeApp();
 
 const firestore = firebaseAdmin.firestore();
+firestore.settings({ ignoreUndefinedProperties: true })
 
 // returns code for the created lobby
 export const createLobby = functions.region("europe-west1").https.onCall(async (data, context) => {
   functions.logger.info("entered createLobby", { structuredData: true });
 
+  const newLobbyDoc = firestore.collection("lobbies").doc();
+
   const newLobby = {
+    id: newLobbyDoc.id,
     lobbyCode: await generateLobbyCode(),
-    users: [] as string[]
+    lobbyType: data["lobbyType"],
   } as Lobby;
 
-  const newLobbyDoc = firestore.collection("lobbies").doc();
   newLobbyDoc.set(newLobby);
   return newLobby;
 });
@@ -24,14 +27,14 @@ export const createLobby = functions.region("europe-west1").https.onCall(async (
 export const joinLobby = functions.region("europe-west1").https.onCall(async (data, context) => {
   functions.logger.info("entered joinLobby", { structuredData: true });
   const enteredCode = data["enteredCode"] as string;
-  const userName = data["userName"] as string;
+  const lobbyUser = data["lobbyUser"] as LobbyUser;
 
   const lobbyDocQuery = await firestore.collection("lobbies").where("lobbyCode", "==", enteredCode).get();
   const lobbyRef = lobbyDocQuery.docs[0];
 
   firestore.collection("lobbies")
     .doc(lobbyRef.id)
-    .update({ users: firebaseAdmin.firestore.FieldValue.arrayUnion(userName) });
+    .collection("users").doc(lobbyUser.id).set(lobbyUser);
 
   if (lobbyDocQuery.empty)
     return {
@@ -42,9 +45,19 @@ export const joinLobby = functions.region("europe-west1").https.onCall(async (da
     return {
       requestStatus: 0,
       reason: "joined successfully",
-      lobbyId: lobbyRef.id
+      lobbyId: lobbyRef.id,
+      lobbyUserId: lobbyUser.id
     }
 });
+
+exports.addTimeStampToMessage = functions.firestore
+  .document("lobbies/{lobbyId}/messages/{messageId}")
+  .onCreate((snap, context) => {
+    const lobbyId = context.params.lobbyId;
+    const messageId = context.params.messageId;
+    const timestamp = firebaseAdmin.firestore.FieldValue.serverTimestamp();
+    firestore.collection("lobbies").doc(lobbyId).collection("messages").doc(messageId).update({ timestamp: timestamp })
+  });
 
 //generate lobby code and makes sure code is unique
 async function generateLobbyCode(): Promise<string> {
@@ -58,3 +71,9 @@ async function generateLobbyCode(): Promise<string> {
   }
   return code;
 }
+
+export const getPlacesRecommendations = functions.region("europe-west1").https.onCall(async (data, context) => {
+  functions.logger.info("entered getPlacesRecommendations", { structuredData: true });
+  const enteredCode = data["enteredCode"] as string;
+  
+});

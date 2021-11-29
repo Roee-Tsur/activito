@@ -1,0 +1,1 @@
+//TODO: player chooses app related preferences: favorite color, NickName
