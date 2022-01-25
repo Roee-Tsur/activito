@@ -12,11 +12,9 @@ class ChatWidget extends StatefulWidget {
 
   static double TEXT_SIZE = 8;
 
-  static late LobbyUser thisLobbyUser;
   static late Lobby lobby;
 
-  ChatWidget(LobbyUser _thisLobbyUserId, Lobby _lobby) {
-    ChatWidget.thisLobbyUser = _thisLobbyUserId;
+  ChatWidget(Lobby _lobby) {
     ChatWidget.lobby = _lobby;
   }
 
@@ -28,21 +26,23 @@ class _ChatWidgetState extends State<ChatWidget> {
   @override
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
-    return Container(
-      alignment: Alignment.bottomCenter,
-      width: size.width,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Padding(
-            padding: EdgeInsets.only(bottom: 12),
-            child: Align(
-                alignment: Alignment.bottomCenter,
-                child: MessagesListWidget(size)),
-          ),
-          Align(alignment: Alignment.bottomCenter, child: ChatTextField(size))
-        ],
+    return Scaffold(
+      body: Container(
+        alignment: Alignment.bottomCenter,
+        width: size.width,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.end,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Padding(
+              padding: EdgeInsets.only(bottom: 12),
+              child: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: MessagesListWidget(size)),
+            ),
+            Align(alignment: Alignment.bottomCenter, child: ChatTextField(size))
+          ],
+        ),
       ),
     );
   }
@@ -165,9 +165,9 @@ class _ChatTextFieldState extends State<ChatTextField> {
 
   void sendButtonPressed() {
     String messageText = textEditingController.text;
-    Server.sendMessage(
+    /*Server.sendMessage(
         lobby: ChatWidget.lobby,
         sender: ChatWidget.thisLobbyUser,
-        messageValue: messageText);
+        messageValue: messageText);*/
   }
 }

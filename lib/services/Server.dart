@@ -198,4 +198,12 @@ class Server {
               fromFirestore: (snapshot, _) =>
                   Message.fromJson(snapshot.data()!),
               toFirestore: (message, _) => message.toJson());
+
+  static Future<void> startLobby(Lobby lobby) async {
+    final parameters = {
+      "lobbyId": lobby.id,
+    };
+    final results = await _functions.httpsCallable("getPlacesRecommendations").call(parameters);
+    print(results.data);
+  }
 }

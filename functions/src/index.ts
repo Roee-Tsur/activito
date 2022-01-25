@@ -1,11 +1,18 @@
 import * as functions from "firebase-functions";
 import * as firebaseAdmin from "firebase-admin";
 import { Lobby } from "./models/Lobby";
+import axios, { } from "axios";
+import { Place } from "./models/Place";
+import { UserLocation } from "./models/UserLoction";
+import { LobbyUser } from "./models/LobbyUser";
+
 
 firebaseAdmin.initializeApp();
 
 const firestore = firebaseAdmin.firestore();
 firestore.settings({ ignoreUndefinedProperties: true })
+
+const maps_api_key = "AIzaSyBI-PzPhUkaozOd4DQKvDSJ6tq1K3S-lww";
 
 // returns code for the created lobby
 export const createLobby = functions.region("europe-west1").https.onCall(async (data, context) => {
@@ -74,6 +81,43 @@ async function generateLobbyCode(): Promise<string> {
 
 export const getPlacesRecommendations = functions.region("europe-west1").https.onCall(async (data, context) => {
   functions.logger.info("entered getPlacesRecommendations", { structuredData: true });
-  const enteredCode = data["enteredCode"] as string;
-  
+  const lobbyId = data["lobbyId"] as string;
+
+  const users = await firestore.collection("lobbies").doc(lobbyId).collection("users").get();
+  const userLocations: UserLocation[] = [];
+
+  users.forEach(doc => {
+    userLocations.push(doc.data()["userLocation"])
+  });
+
+  const middlePoint = getMiddlePoint(userLocations);
+  const locationParameter = middlePoint.latitude.toString() + "%2C" + middlePoint.longitude.toString();
+  const config =
+    "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=" + locationParameter + "&radius=30000&type=restaurant&keyword=cruise&key=" + maps_api_key;
+
+  const requestResults = await axios(config);
+  const places: Place[] = [];
+  requestResults.data["results"].forEach((result: any) => {
+    const placeDetailsURL = "https://maps.googleapis.com/maps/api/place/details/json?fields=name%2Crating%2Cformatted_phone_number%2Cformatted_address%2Cgeometry%2Clocation&place_id=" + result["place_id"] + "&key=" + maps_api_key;
+    axios(placeDetailsURL).
+      then(placeDetails => { 
+        console.log(placeDetails.data);
+        places.push(new Place(placeDetails));
+      })
+      .catch(error => console.error(error));
+  });
+
+  return places;
 });
+
+function getMiddlePoint(userLocations: UserLocation[]): UserLocation {
+  let lat = 0, lng = 0, count = 0;
+
+  userLocations.forEach(userLocation => {
+    lng += userLocation.longitude;
+    lat += userLocation.latitude;
+    count++;
+  })
+
+  return { latitude: lat / count, longitude: lng / count } as UserLocation;
+}

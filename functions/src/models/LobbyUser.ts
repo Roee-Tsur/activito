@@ -1,4 +1,6 @@
-class LobbyUser {
+import { UserLocation } from "./UserLoction";
+
+export class LobbyUser {
     id: string;
     activitoUserId: string;
     name: string;
