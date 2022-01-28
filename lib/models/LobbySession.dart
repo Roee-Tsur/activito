@@ -1,12 +1,17 @@
 import 'Lobby.dart';
+import 'LobbyUser.dart';
 
 class LobbySession {
   Lobby? lobby;
-  String thisLobbyUserId='';
+  LobbyUser? thisLobbyUser;
 
-  LobbySession(this.lobby, this.thisLobbyUserId);
+  LobbySession(this.lobby);
 
   LobbySession.isNull() {
     lobby = null;
+  }
+
+  setLobbyUser(LobbyUser lobbyUser) {
+    this.thisLobbyUser = lobbyUser;
   }
 }

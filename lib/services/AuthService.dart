@@ -31,8 +31,10 @@ class AuthService {
 
   static Future<void> loginUser(String uid) async {
     final user = await Server.getUser(uid);
-    _setCurrentUser(user);
-    await Server.initProfilePic();
+    if (user != null) {
+      _setCurrentUser(user);
+      await Server.initProfilePic();
+    }
   }
 
   static Future createAndLoginUser(String uid, String? email) async {

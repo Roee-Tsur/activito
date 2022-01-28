@@ -44,6 +44,8 @@ class HomeScreenBody extends StatelessWidget {
           : '');
   final formKey = GlobalKey<FormState>();
 
+  LobbyUser? thisLobbyUser;
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -115,14 +117,15 @@ class HomeScreenBody extends StatelessWidget {
     if (action == "create")
       lobbySession = await createLobbyButtonPressed(userName, context);
 
-    openUserLocationScreen(context, lobbySession!);
+    lobbySession!.setLobbyUser(thisLobbyUser!);
+    openUserLocationScreen(context, lobbySession);
   }
 
   Future<LobbySession> joinLobbyButtonPressed(String nickName) async {
     String enteredCode = lobbyCodeController.value.text;
-    LobbyUser lobbyUser = LobbyUser(name: nickName);
+    thisLobbyUser = LobbyUser(name: nickName);
     return await Server.joinLobby(
-        enteredCode: enteredCode, lobbyUser: lobbyUser);
+        enteredCode: enteredCode, lobbyUser: thisLobbyUser!);
   }
 
   Future<LobbySession> createLobbyButtonPressed(
@@ -136,8 +139,8 @@ class HomeScreenBody extends StatelessWidget {
         icon2: Icons.local_activity,
         onTap1: () => Navigator.pop(context, 'food'),
         onTap2: () => Fluttertoast.showToast(msg: 'Under construction'));
-    LobbyUser lobbyUser = LobbyUser(name: nickName, isLeader: true);
-    return await Server.createLobby(lobbyType: lobbyType, lobbyUser: lobbyUser);
+    thisLobbyUser = LobbyUser(name: nickName, isLeader: true);
+    return await Server.createLobby(lobbyType: lobbyType, lobbyUser: thisLobbyUser!);
   }
 
   void friendsButtonPressed() {}

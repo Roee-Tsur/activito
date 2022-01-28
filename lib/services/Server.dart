@@ -52,7 +52,7 @@ class Server {
       Fluttertoast.showToast(msg: "joined lobby");
       final lobbyData =
           (await _lobbiesCollection.doc(resultsData["lobbyId"]).get()).data();
-      return LobbySession(lobbyData as Lobby, resultsData['lobbyUserId']);
+      return LobbySession(lobbyData as Lobby);
     } else {
       Fluttertoast.showToast(
           msg: "didn't join lobby: ${resultsData["reason"]}",
@@ -80,8 +80,12 @@ class Server {
     return newUser;
   }
 
-  static Future<ActivitoUser> getUser(String id) async =>
-      ((await _usersCollection.doc(id).get()).data() as ActivitoUser);
+  static Future<ActivitoUser?> getUser(String id) async {
+    final result = (await _usersCollection.doc(id).get()).data();
+    if (result == null)
+      return null;
+    return result as ActivitoUser;
+  }
 
   static Future<void> setProfilePic(File newProfilePic) async {
     String profilePicPath = (await getApplicationDocumentsDirectory()).path +
@@ -172,12 +176,14 @@ class Server {
           Lobby lobby) =>
       _getMessagesCollectionRef(lobby).orderBy('timestamp', descending: true).snapshots();
 
-  static void sendMessage(
+  /// adds message to DB and return the message
+  static Message sendMessage(
       {required Lobby lobby,
       required LobbyUser sender,
       required String messageValue}) {
     Message message = Message(sender, messageValue);
     _getMessagesCollectionRef(lobby).doc(message.id).set(message);
+    return message;
   }
 
   static CollectionReference<LobbyUser> _getLobbyUsersCollectionRef(

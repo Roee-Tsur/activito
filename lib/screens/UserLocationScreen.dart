@@ -77,7 +77,7 @@ class _UserLocationScreenState extends State<UserLocationScreen> {
 
   void continueToLobbyScreen(UserLocation userLocation) {
     Server.updateUserLocation(widget.lobbySession.lobby!,
-        widget.lobbySession.thisLobbyUserId, userLocation);
+        widget.lobbySession.thisLobbyUser!.id, userLocation);
     Navigator.pop(context);
     Navigator.push(
         context,
