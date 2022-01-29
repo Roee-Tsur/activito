@@ -11,7 +11,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 class ChatWidget extends StatefulWidget {
-
   static double TEXT_SIZE = 8;
 
   static late LobbySession _lobbySession;
@@ -75,17 +74,16 @@ class _ChatBodyWidgetState extends State<ChatBodyWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.end,
-      crossAxisAlignment: CrossAxisAlignment.center,
+    return ListView(
+      physics: NeverScrollableScrollPhysics(),reverse: true,
       children: [
+        Align(
+            alignment: Alignment.bottomCenter,
+            child: ChatTextField(widget.size, addMessage)),
         Padding(
           padding: EdgeInsets.only(bottom: 12),
           child: getMessagesList(),
-        ),
-        Align(
-            alignment: Alignment.bottomCenter,
-            child: ChatTextField(widget.size, addMessage))
+        )
       ],
     );
   }
@@ -99,9 +97,9 @@ class _ChatBodyWidgetState extends State<ChatBodyWidget> {
     }
     return ListView.builder(
         itemCount: widget.messages!.length,
+        physics: AlwaysScrollableScrollPhysics(),
         shrinkWrap: true,
         padding: EdgeInsets.only(top: 10, bottom: 10),
-        physics: NeverScrollableScrollPhysics(),
         itemBuilder: (context, index) {
           return MessageWidget(widget.size,
               widget.messages![widget.messages!.length - 1 - index]);

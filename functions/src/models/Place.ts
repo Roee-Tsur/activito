@@ -8,8 +8,7 @@ export class Place {
     location: UserLocation;
 
     constructor(placeJson: AxiosResponse<any, any>) {
-        const data = placeJson["data"];
-        console.log("location: " + data["geometry"]["location"].toString());
+        const data = placeJson.data["result"]; //TODO: error here
         this.name = data["name"];
         this.address = data["formatted_address"];
         this.phoneNumber = data["formatted_phone_number"];

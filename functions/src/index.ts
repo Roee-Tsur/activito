@@ -1,7 +1,7 @@
 import * as functions from "firebase-functions";
 import * as firebaseAdmin from "firebase-admin";
 import { Lobby } from "./models/Lobby";
-import axios, { } from "axios";
+import axios from "axios";
 import { Place } from "./models/Place";
 import { UserLocation } from "./models/UserLoction";
 import { LobbyUser } from "./models/LobbyUser";
@@ -97,16 +97,19 @@ export const getPlacesRecommendations = functions.region("europe-west1").https.o
 
   const requestResults = await axios(config);
   const places: Place[] = [];
+  const promises: Promise<any>[] = [];
+
   requestResults.data["results"].forEach((result: any) => {
-    const placeDetailsURL = "https://maps.googleapis.com/maps/api/place/details/json?fields=name%2Crating%2Cformatted_phone_number%2Cformatted_address%2Cgeometry%2Clocation&place_id=" + result["place_id"] + "&key=" + maps_api_key;
-    axios(placeDetailsURL).
-      then(placeDetails => { 
+    const placeDetailsURL = "https://maps.googleapis.com/maps/api/place/details/json?fields=name%2Crating%2Cformatted_phone_number%2Cformatted_address%2Cgeometry&place_id=" + result["place_id"] + "&key=" + maps_api_key;
+    promises.push(axios(placeDetailsURL).
+      then(placeDetails => {
         console.log(placeDetails.data);
         places.push(new Place(placeDetails));
       })
-      .catch(error => console.error(error));
+      .catch(error => console.error(error))
+    );
   });
-
+  await Promise.all(promises);
   return places;
 });
 

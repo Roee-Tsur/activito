@@ -158,6 +158,7 @@ class HomeScreenBody extends StatelessWidget {
               builder: (context) =>
                   UserLocationScreen(lobbySession, currentUserLocation)));
     } else {
+      // TODO: add loading after dialog
       await showGeneralDialog(
           context: context,
           pageBuilder: (context, _, __) {
