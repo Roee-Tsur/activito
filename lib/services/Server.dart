@@ -5,6 +5,7 @@ import 'package:activito/models/ActivitoUser.dart';
 import 'package:activito/models/LobbySession.dart';
 import 'package:activito/models/LobbyUser.dart';
 import 'package:activito/models/Message.dart';
+import 'package:activito/models/Place.dart';
 import 'package:activito/models/UserLocation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
@@ -82,8 +83,7 @@ class Server {
 
   static Future<ActivitoUser?> getUser(String id) async {
     final result = (await _usersCollection.doc(id).get()).data();
-    if (result == null)
-      return null;
+    if (result == null) return null;
     return result as ActivitoUser;
   }
 
@@ -159,7 +159,7 @@ class Server {
   }
 
   /// return a the users of a lobby mapped by their id
-  static Future<Map<String,LobbyUser>> getLobbyUsersMap(Lobby lobby) async {
+  static Future<Map<String, LobbyUser>> getLobbyUsersMap(Lobby lobby) async {
     Query query = _getLobbyUsersCollectionRef(lobby);
     final data = (await query.get()).docs;
     List<LobbyUser> users =
@@ -174,7 +174,9 @@ class Server {
 
   static Stream<QuerySnapshot<Message>> getLobbyMessagesEventListener(
           Lobby lobby) =>
-      _getMessagesCollectionRef(lobby).orderBy('timestamp', descending: true).snapshots();
+      _getMessagesCollectionRef(lobby)
+          .orderBy('timestamp', descending: false)
+          .snapshots();
 
   /// adds message to DB and return the message
   static Message sendMessage(
@@ -205,11 +207,21 @@ class Server {
                   Message.fromJson(snapshot.data()!),
               toFirestore: (message, _) => message.toJson());
 
-  static Future<void> startLobby(Lobby lobby) async {
+  static void startLobby(Lobby lobby) {
     final parameters = {
       "lobbyId": lobby.id,
     };
-    final results = await _functions.httpsCallable("getPlacesRecommendations").call(parameters);
-    print(results.data);
+    _functions.httpsCallable("getPlacesRecommendations").call(parameters);
+    /*final results = (await _functions
+            .httpsCallable("getPlacesRecommendations")
+            .call(parameters))
+        .data;
+    List<Place> places = List.generate(results['length'], (index) {
+      final map = Map<String, dynamic>.from(results['places'][index]);
+      print(map);
+      return Place.fromJson(map);
+    });
+    print(places);
+    return places;*/
   }
 }

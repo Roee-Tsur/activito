@@ -1,12 +1,8 @@
-import 'dart:io';
-
-import 'package:activito/models/Lobby.dart';
 import 'package:activito/models/LobbySession.dart';
 import 'package:activito/models/LobbyUser.dart';
 import 'package:activito/models/UserLocation.dart';
 import 'package:activito/screens/AuthScreens/ProfileImagePickerScreen.dart';
 import 'package:activito/screens/AuthScreens/SigninScreen.dart';
-import 'package:activito/screens/LobbyScreen.dart';
 import 'package:activito/screens/UserLocationScreen.dart';
 import 'package:activito/services/AuthService.dart';
 import 'package:activito/services/CustomWidgets.dart';
@@ -43,6 +39,7 @@ class HomeScreenBody extends StatelessWidget {
           ? AuthService.currentUser!.nickName
           : '');
   final formKey = GlobalKey<FormState>();
+  final nameFieldKey = GlobalKey<FormFieldState>();
 
   LobbyUser? thisLobbyUser;
 
@@ -50,16 +47,26 @@ class HomeScreenBody extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Expanded(
-              child: Form(
-                key: formKey,
+        child: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Padding(padding: EdgeInsets.only(top: 20)),
+              Container(
+                padding: EdgeInsets.all(8),
+                width: MediaQuery.of(context).size.width * 0.8,
+                decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10.0),
+                    color: Theme.of(context).primaryColor.withAlpha(25)),
                 child: TextFormField(
-                  decoration: InputDecoration(hintText: "name"),
+                  key: nameFieldKey,
+                  decoration: InputDecoration(
+                    border: UnderlineInputBorder(),
+                    labelText: 'Enter your name',
+                  ),
                   textAlign: TextAlign.center,
                   controller: userNameController,
                   validator: (value) {
@@ -69,47 +76,68 @@ class HomeScreenBody extends StatelessWidget {
                   },
                 ),
               ),
-            ),
-            Expanded(
-              child: TextField(
-                decoration: InputDecoration(hintText: "lobby code"),
-                textAlign: TextAlign.center,
-                inputFormatters: [
-                  TextInputFormatter.withFunction(
-                      (oldValue, newValue) => TextEditingValue(
-                            text: newValue.text.toUpperCase(),
-                            selection: newValue.selection,
-                          ))
-                ],
-                controller: lobbyCodeController,
-              ),
-            ),
-            Expanded(
-              child: TextButton(
-                onPressed: () => actionButtonPressed(context, "join"),
-                child: Text('join'),
-              ),
-            ),
-            Expanded(
-              child: Row(children: [
-                HomeRowWidget(
-                  buttonText: 'create lobby',
-                  onPressed: () => actionButtonPressed(context, "create"),
+              Padding(padding: EdgeInsets.only(top: 16)),
+              Container(
+                padding: EdgeInsets.all(8),
+                width: MediaQuery.of(context).size.width * 0.8,
+                decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10.0),
+                    color: Theme.of(context).primaryColor.withAlpha(25)),
+                child: TextFormField(
+                  decoration: InputDecoration(
+                    border: UnderlineInputBorder(),
+                    labelText: 'Enter lobby code',
+                  ),
+                  textAlign: TextAlign.center,
+                  inputFormatters: [
+                    TextInputFormatter.withFunction(
+                        (oldValue, newValue) => TextEditingValue(
+                              text: newValue.text.toUpperCase(),
+                              selection: newValue.selection,
+                            ))
+                  ],
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty)
+                      return 'please enter a lobby code';
+                    if (value.length != 6)
+                      return 'the lobby code should be 6 characters long';
+                    return null;
+                  },
+                  controller: lobbyCodeController,
                 ),
-                HomeRowWidget(
-                    buttonText: 'friends', onPressed: friendsButtonPressed),
-                HomeRowWidget(
-                    buttonText: 'settings', onPressed: settingsButtonPressed)
-              ]),
-            )
-          ],
+              ),
+              Expanded(
+                child: TextButton(
+                  onPressed: () => actionButtonPressed(context, "join"),
+                  child: Text('join'),
+                ),
+              ),
+              Expanded(
+                child: Row(children: [
+                  HomeRowWidget(
+                    buttonText: 'create lobby',
+                    onPressed: () => actionButtonPressed(context, "create"),
+                  ),
+                  HomeRowWidget(
+                      buttonText: 'friends', onPressed: friendsButtonPressed),
+                  HomeRowWidget(
+                      buttonText: 'settings', onPressed: settingsButtonPressed)
+                ]),
+              )
+            ],
+          ),
         ),
       ),
     );
   }
 
   actionButtonPressed(BuildContext context, String action) async {
-    if (!formKey.currentState!.validate()) return;
+    if (action == 'join') {
+      if (!formKey.currentState!.validate()) return;
+    } else if (!nameFieldKey.currentState!.validate()) {
+      print(null);
+      return;
+    }
     String userName = userNameController.value.text;
     LobbySession? lobbySession;
 
@@ -140,7 +168,8 @@ class HomeScreenBody extends StatelessWidget {
         onTap1: () => Navigator.pop(context, 'food'),
         onTap2: () => Fluttertoast.showToast(msg: 'Under construction'));
     thisLobbyUser = LobbyUser(name: nickName, isLeader: true);
-    return await Server.createLobby(lobbyType: lobbyType, lobbyUser: thisLobbyUser!);
+    return await Server.createLobby(
+        lobbyType: lobbyType, lobbyUser: thisLobbyUser!);
   }
 
   void friendsButtonPressed() {}
@@ -169,7 +198,9 @@ class HomeScreenBody extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                    "${Globals.appName} needs access to your location, the app won't work without it",textAlign: TextAlign.center,),
+                  "${Globals.appName} needs access to your location, the app won't work without it",
+                  textAlign: TextAlign.center,
+                ),
                 TextButton(
                     onPressed: () => Navigator.pop(context),
                     child: Text('continue'))
@@ -177,8 +208,8 @@ class HomeScreenBody extends StatelessWidget {
             )));
           });
       if (await Permission.locationWhenInUse.request().isGranted) {
-        UserLocation currentUserLocation = UserLocation.fromDynamic(
-            await Location.instance.getLocation());
+        UserLocation currentUserLocation =
+            UserLocation.fromDynamic(await Location.instance.getLocation());
         Navigator.push(
             context,
             MaterialPageRoute(

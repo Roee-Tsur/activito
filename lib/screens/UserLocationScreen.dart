@@ -109,6 +109,7 @@ class _UserLocationScreenBodyState extends State<UserLocationScreenBody> {
   @override
   Widget build(BuildContext context) {
     return GoogleMap(
+      zoomControlsEnabled: false,
       initialCameraPosition: CameraPosition(
           target: widget.currentUserLocation.toLatLng(), zoom: 11),
       onMapCreated: (mapController) => this.mapController = mapController,

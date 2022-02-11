@@ -1,13 +1,9 @@
-import 'dart:async';
-import 'dart:collection';
 
-import 'package:activito/models/Lobby.dart';
 import 'package:activito/models/LobbySession.dart';
-import 'package:activito/models/LobbyUser.dart';
 import 'package:activito/models/Message.dart';
 import 'package:activito/nice_widgets/EmptyContainer.dart';
+import 'package:activito/screens/LobbyScreen.dart';
 import 'package:activito/services/Server.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 class ChatWidget extends StatefulWidget {
@@ -28,19 +24,14 @@ class _ChatWidgetState extends State<ChatWidget> {
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
     return Scaffold(
-      body: Container(
-          alignment: Alignment.bottomCenter,
-          width: size.width,
-          child: ChatBodyWidget(size)),
+      appBar: AppBar(),
+      body: ChatBodyWidget(size),
     );
   }
 }
 
 class ChatBodyWidget extends StatefulWidget {
   Size size;
-  List<Message>? messages;
-
-  Stream<QuerySnapshot<Message>>? messagesStream;
 
   ChatBodyWidget(this.size);
 
@@ -49,33 +40,20 @@ class ChatBodyWidget extends StatefulWidget {
 }
 
 class _ChatBodyWidgetState extends State<ChatBodyWidget> {
-  StreamSubscription? eventListener;
-
-  @override
-  void initState() {
-    widget.messagesStream =
-        Server.getLobbyMessagesEventListener(ChatWidget._lobbySession.lobby!);
-    eventListener = widget.messagesStream!.listen((event) {
-      final data = event.docs;
-      setState(() {
-        widget.messages =
-            List.generate(data.length, (index) => data[index].data());
-      });
-      print(widget.messages);
-    });
-    super.initState();
-  }
-
-  @override
-  void dispose() {
-    eventListener!.cancel();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: Column(
+        children: [
+          Expanded(child: getMessagesList()),
+          ChatTextField(widget.size, addMessage)
+        ],
+      ),
+    );
     return ListView(
-      physics: NeverScrollableScrollPhysics(),reverse: true,
+      physics: AlwaysScrollableScrollPhysics(),
+      reverse: true,
       children: [
         Align(
             alignment: Alignment.bottomCenter,
@@ -89,29 +67,30 @@ class _ChatBodyWidgetState extends State<ChatBodyWidget> {
   }
 
   Widget getMessagesList() {
-    if (widget.messages == null) {
-      return Container(
-        width: 0,
-        height: 0,
-      );
-    }
+    final messages = LobbyScreen.messages;
+    if (messages == null) return EmptyContainer();
+
     return ListView.builder(
-        itemCount: widget.messages!.length,
+        clipBehavior: Clip.none,
+        itemCount: messages.length,
+        reverse: true,
         physics: AlwaysScrollableScrollPhysics(),
         shrinkWrap: true,
         padding: EdgeInsets.only(top: 10, bottom: 10),
         itemBuilder: (context, index) {
-          return MessageWidget(widget.size,
-              widget.messages![widget.messages!.length - 1 - index]);
+          return MessageWidget(
+              widget.size, messages[messages.length - 1 - index]);
         });
   }
 
   void addMessage(Message message) {
+    var messages = LobbyScreen.messages;
+
     setState(() {
-      if (widget.messages == null)
-        widget.messages = List.generate(1, (index) => message);
+      if (messages == null)
+        messages = List.generate(1, (index) => message);
       else
-        widget.messages!.insert(0, message);
+        messages!.add(message);
     });
   }
 }

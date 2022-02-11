@@ -1,4 +1,4 @@
-import { UserLocation } from "./UserLoction";
+import { UserLocation } from "./UserLocation";
 
 export class LobbyUser {
     id: string;

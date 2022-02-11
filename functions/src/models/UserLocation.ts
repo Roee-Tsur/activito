@@ -11,7 +11,7 @@ export class UserLocation {
             this.longitude = lng;
     }
 
-    public toUrlParameter(): string {
-        return this.latitude.toString() + "%2C" + this.longitude.toString();
+    static toUrlParameter(location: UserLocation): string {
+        return location.latitude.toString() + "%2C" + location.longitude.toString();
     }
 }

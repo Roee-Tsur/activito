@@ -26,6 +26,7 @@ dependencies:
   permission_handler: ^8.2.6
   google_maps_flutter: ^2.1.0
   uuid: ^3.0.5
+  badges: ^2.0.2
 
 dev_dependencies:
   flutter_test:

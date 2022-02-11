@@ -3,16 +3,15 @@ import * as firebaseAdmin from "firebase-admin";
 import { Lobby } from "./models/Lobby";
 import axios from "axios";
 import { Place } from "./models/Place";
-import { UserLocation } from "./models/UserLoction";
+import { UserLocation } from "./models/UserLocation";
 import { LobbyUser } from "./models/LobbyUser";
+import { URLHelper } from "./URLHelper";
 
 
 firebaseAdmin.initializeApp();
 
 const firestore = firebaseAdmin.firestore();
 firestore.settings({ ignoreUndefinedProperties: true })
-
-const maps_api_key = "AIzaSyBI-PzPhUkaozOd4DQKvDSJ6tq1K3S-lww";
 
 // returns code for the created lobby
 export const createLobby = functions.region("europe-west1").https.onCall(async (data, context) => {
@@ -24,6 +23,8 @@ export const createLobby = functions.region("europe-west1").https.onCall(async (
     id: newLobbyDoc.id,
     lobbyCode: await generateLobbyCode(),
     lobbyType: data["lobbyType"],
+    isStarted: false,
+    placeRecommendations: {}
   } as Lobby;
 
   newLobbyDoc.set(newLobby);
@@ -57,7 +58,7 @@ export const joinLobby = functions.region("europe-west1").https.onCall(async (da
     }
 });
 
-exports.addTimeStampToMessage = functions.firestore
+exports.addTimeStampToMessage = functions.region("europe-west1").firestore
   .document("lobbies/{lobbyId}/messages/{messageId}")
   .onCreate((snap, context) => {
     const lobbyId = context.params.lobbyId;
@@ -90,17 +91,22 @@ export const getPlacesRecommendations = functions.region("europe-west1").https.o
     userLocations.push(doc.data()["userLocation"])
   });
 
-  const middlePoint = getMiddlePoint(userLocations);
-  const locationParameter = middlePoint.latitude.toString() + "%2C" + middlePoint.longitude.toString();
-  const config =
-    "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=" + locationParameter + "&radius=30000&type=restaurant&keyword=cruise&key=" + maps_api_key;
+  //improve radius and check more then 0 places retrived
+  const config = URLHelper.getNearbySearchURL(userLocations, 1);
+  let requestResults = await axios(config);
+  let counter = 1;
 
-  const requestResults = await axios(config);
+  while (requestResults.data["results"].length <= 1) {
+    counter += 1;
+    const config = URLHelper.getNearbySearchURL(userLocations, counter);
+    requestResults = await axios(config);
+  }
+
   const places: Place[] = [];
   const promises: Promise<any>[] = [];
 
   requestResults.data["results"].forEach((result: any) => {
-    const placeDetailsURL = "https://maps.googleapis.com/maps/api/place/details/json?fields=name%2Crating%2Cformatted_phone_number%2Cformatted_address%2Cgeometry&place_id=" + result["place_id"] + "&key=" + maps_api_key;
+    const placeDetailsURL = URLHelper.getPlaceDetailsURL(result["place_id"]);
     promises.push(axios(placeDetailsURL).
       then(placeDetails => {
         console.log(placeDetails.data);
@@ -110,17 +116,20 @@ export const getPlacesRecommendations = functions.region("europe-west1").https.o
     );
   });
   await Promise.all(promises);
-  return places;
+
+  const placeRecommendations = pickBestPlaces(places);
+
+  firestore.collection("lobbies").doc(lobbyId).update({ placeRecommendations: placeRecommendations, isStarted: true });
 });
 
-function getMiddlePoint(userLocations: UserLocation[]): UserLocation {
-  let lat = 0, lng = 0, count = 0;
+function pickBestPlaces(places: Place[]) {
+  if (places == null || places.length == 0)
+    return null;
 
-  userLocations.forEach(userLocation => {
-    lng += userLocation.longitude;
-    lat += userLocation.latitude;
-    count++;
-  })
+  const placeRecommendations = {
+    cheapest: JSON.parse(JSON.stringify(Place.getCheapest(places))),
+    bestRating: JSON.parse(JSON.stringify(Place.getBestRating(places)))
+  };
 
-  return { latitude: lat / count, longitude: lng / count } as UserLocation;
+  return placeRecommendations;
 }
