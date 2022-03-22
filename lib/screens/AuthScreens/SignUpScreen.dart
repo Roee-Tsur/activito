@@ -1,9 +1,9 @@
+import 'package:activito/nice_widgets/AuthScreen.dart';
 import 'package:activito/screens/AuthScreens/ProfileImagePickerScreen.dart';
-import 'package:activito/services/AuthService.dart';
-import 'package:activito/services/Globals.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+
+import '../../services/AuthService.dart';
 
 class SignUpScreen extends StatefulWidget {
   @override
@@ -13,60 +13,47 @@ class SignUpScreen extends StatefulWidget {
 class _SignUpScreenState extends State<SignUpScreen> {
   @override
   Widget build(BuildContext context) {
-    return SafeArea(child: Scaffold(body: _SignUpBody()));
-  }
-}
-
-class _SignUpBody extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(Globals.appName + '\nSign Up', textAlign: TextAlign.center),
-        Form(
-            child: Column(
-          children: [TextFormField()],
-        )),
-        TextButton(
-            onPressed: signUpWithEmail, child: Text('sign up with email')),
-        TextButton(
-            onPressed: () => signUpWithGoogle(context),
-            child: Text('sign up with google')),
-        TextButton(
-            onPressed: signUpWithFacebook,
-            child: Text('sign up with facebook')),
-      ],
-    );
+    return AuthScreen(
+        isLogin: false,
+        emailAction: signUpWithEmail,
+        facebookAction: signUpWithFacebook,
+        googleAction: signUpWithGoogle);
   }
 
   Future<void> signUpWithGoogle(BuildContext context) async {
-    UserCredential? userCredential = await AuthService.signInWithGoogle();
-    if (userCredential == null) {
+    if (!await AuthService.signInWithGoogle()) {
       Fluttertoast.showToast(msg: "Sign Up failed");
       return;
     }
 
-    final uid = AuthService.getCurrentFirebaseUserId();
-    if (!userCredential.additionalUserInfo!.isNewUser) {
-      userAlreadyExists(context, uid);
+    if (!AuthService.currentAdditionalUserInfo!.isNewUser) {
+      userAlreadyExists();
       return;
     }
 
-    await AuthService.createAndLoginUser(uid, userCredential.user!.email);
-    continueToProfilePicPickerScreen(context);
+    continueToProfilePicPickerScreen();
   }
 
   Future<void> signUpWithFacebook() async {}
 
-  void signUpWithEmail() {}
+  Future<void> signUpWithEmail(String email, String password) async {
+    bool loginResults =
+        await AuthService.SignUpWithEmailAndPassword(email, password);
+    if (!loginResults) {
+      Fluttertoast.showToast(msg: "sign up failed");
+      return;
+    }
 
-  continueToProfilePicPickerScreen(BuildContext context) {
-    Navigator.push(context,
-        MaterialPageRoute(builder: (context) => ProfileImagePickerScreen()));
+    continueToProfilePicPickerScreen();
   }
 
-  Future<void> userAlreadyExists(BuildContext context, String uid) async {
-    await AuthService.loginUser(uid);
+  continueToProfilePicPickerScreen() async {
+    await Navigator.push(context,
+        MaterialPageRoute(builder: (context) => ProfileImagePickerScreen()));
+    Navigator.pop(context);
+  }
+
+  Future<void> userAlreadyExists() async {
     Fluttertoast.showToast(msg: "user already exists");
     Navigator.pop(context, true);
   }

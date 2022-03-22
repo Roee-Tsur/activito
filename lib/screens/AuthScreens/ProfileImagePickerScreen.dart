@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'package:activito/nice_widgets/CustomWidgets.dart';
+import 'package:activito/services/AuthService.dart';
 import 'package:activito/services/Server.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -9,7 +11,7 @@ class ProfileImagePickerScreen extends StatefulWidget {
   late Widget pickedPicWidget;
 
   ProfileImagePickerScreen() {
-    this.pickedPicWidget = Icon(Icons.image);
+    this.pickedPicWidget = Icon(Icons.image, size: 50,);
   }
 
   @override
@@ -21,28 +23,21 @@ class _ProfileImagePickerScreenState extends State<ProfileImagePickerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: InkWell(
-        child: Center(
-          child: Container(
-            child: Column(
-              children: [
-                Expanded(
-                  child: Text(
-                    'click to choose profile picture',
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                Expanded(
-                  child: widget.pickedPicWidget,
-                ),
-              ],
-            ),
-            alignment: Alignment.center,
-            width: 150,
-            height: 150,
+      body: Center(
+        child: InkWell(
+          child: Column(
+            mainAxisSize: MainAxisSize.max,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,children: [
+              Text(
+                'click to choose profile picture',style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                textAlign: TextAlign.center,
+              ),EmptySpace(height: 20),
+              widget.pickedPicWidget,
+            ],
           ),
+          onTap: pickPicPressed,
         ),
-        onTap: pickPicPressed,
       ),
     );
   }
@@ -51,7 +46,7 @@ class _ProfileImagePickerScreenState extends State<ProfileImagePickerScreen> {
     final method = await showPickMethodDialog();
     if (method == null) return;
     if (method == 2) {
-      await Server.deleteProfilePic();
+      await AuthService.deleteProfilePic();
       Navigator.pop(context, true);
       return;
     }
@@ -64,7 +59,7 @@ class _ProfileImagePickerScreenState extends State<ProfileImagePickerScreen> {
     File? croppedPic = await ImageCropper.cropImage(
         aspectRatio: CropAspectRatio(ratioX: 1, ratioY: 1),
         sourcePath: pickedPic!.path,
-        cropStyle: CropStyle.circle);
+        cropStyle: CropStyle.rectangle);
     setState(() {
       widget.pickedPicWidget = getPicPickedWidget(croppedPic);
     });
@@ -72,31 +67,30 @@ class _ProfileImagePickerScreenState extends State<ProfileImagePickerScreen> {
 
   Widget getPicPickedWidget(File? croppedPic) => Column(
         children: [
-          Expanded(
-            child: CircleAvatar(radius: 150,
-              backgroundImage: Image.file(
+          Padding(
+            padding: const EdgeInsets.all(14.0),
+            child: Image(
+              image: Image.file(
                 croppedPic!,
               ).image,
             ),
           ),
-          Expanded(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                TextButton(
-                    onPressed: cancelButtonPressed,
-                    child: Text(
-                      'cancel',
-                      style: TextStyle(color: Colors.redAccent, fontSize: 20),
-                    )),
-                TextButton(
-                    onPressed: () => saveButtonPressed(croppedPic),
-                    child: Text(
-                      'save',
-                      style: TextStyle(color: Colors.green, fontSize: 20),
-                    ))
-              ],
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              TextButton(
+                  onPressed: cancelButtonPressed,
+                  child: Text(
+                    'cancel',
+                    style: TextStyle(color: Colors.redAccent, fontSize: 20),
+                  )),
+              TextButton(
+                  onPressed: () => saveButtonPressed(croppedPic),
+                  child: Text(
+                    'save',
+                    style: TextStyle(color: Colors.green, fontSize: 20),
+                  ))
+            ],
           )
         ],
       );

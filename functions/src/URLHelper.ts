@@ -4,8 +4,8 @@ export class URLHelper {
     static maps_api_key = "AIzaSyBI-PzPhUkaozOd4DQKvDSJ6tq1K3S-lww";
 
     static getPhotoURL(photoReference: string) {
-        return "https://maps.googleapis.com/maps/api/place/photo&photo_reference="
-            .concat(photoReference, "&", this.maps_api_key);
+        return "https://maps.googleapis.com/maps/api/place/photo?photoreference="
+            .concat(photoReference, "&key=", this.maps_api_key, "&maxwidth=400&maxheight=400");
     }
 
     static getPlaceDetailsURL(placeId: string,) {

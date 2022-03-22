@@ -32,4 +32,8 @@ class UserLocation {
 
   @override
   String toString() => "($latitude,$longitude)";
+
+  String toUrlParameter() {
+    return latitude.toString() + '-' + longitude.toString();
+  }
 }

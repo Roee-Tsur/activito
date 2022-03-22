@@ -1,17 +1,31 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 import 'ActivitoFirestoreModel.dart';
 import 'Place.dart';
 
-///in firestore each Lobby has a collection of users (LobbyUser)
+///in firestore each Lobby has a collection of users (LobbyUser) and a collection of individual fields that need to be listened to
 class Lobby extends ActivitoFirestoreModel {
+  static final openStage = 'open',
+      findingPlaces = 'finding places',
+      votingStage = 'voting',
+      finalVotesStage = 'final votes',
+      //countingVotes = 'counting votes' implemented without updating the lobby stage, after the final votes countdown ends
+      finalStage = 'done';
+
   late String id;
 
   ///"food" or "other"
   late String lobbyType;
-  late String lobbyCode;
-  late bool isStarted;
-  late Map<String, Place>? placeRecommendations;
 
-  ///options: cheapest, bestRating
+  ///open: waiting for users to join, voting: starts when leader presses "start" ends when all initial votes are in, final votes: users can votes until timer is done, done: the session has ended client should show FinalResultsScreen
+  late String lobbyStage;
+
+  late String lobbyCode;
+
+  late DateTime? startCountDownTime;
+  late List<Place>? placeRecommendations; //top 3 places
+  late num numberOfUsers;
+  late num? winningPlaceIndex;
 
   Lobby(this.lobbyCode, this.lobbyType);
 
@@ -19,13 +33,17 @@ class Lobby extends ActivitoFirestoreModel {
     this.id = validateJsonField(json["id"]);
     this.lobbyType = validateJsonField(json['lobbyType']);
     this.lobbyCode = validateJsonField(json['lobbyCode']);
-    this.isStarted = validateJsonField(json['isStarted']);
+    this.lobbyStage = validateJsonField(json['lobbyStage']);
+    this.numberOfUsers = validateJsonField(json["numberOfUsers"]);
+    Timestamp? timestamp = validateJsonField(json['startCountDownTime']);
+    this.startCountDownTime = timestamp == null ? null : timestamp.toDate();
+    this.winningPlaceIndex = validateJsonField(json['winningPlaceIndex']);
 
-    this.placeRecommendations = {};
-    Map places = Map<String, dynamic>.from(
-        validateJsonField(json["placeRecommendations"]));
-    places.forEach((key, value) {
-      this.placeRecommendations![key] = Place.fromJson(value);
+    this.placeRecommendations = [];
+    List places =
+        List<dynamic>.from(validateJsonField(json["placeRecommendations"]));
+    places.forEach((value) {
+      this.placeRecommendations!.add(Place.fromJson(value));
     });
   }
 
@@ -33,7 +51,10 @@ class Lobby extends ActivitoFirestoreModel {
         'id': id,
         "lobbyCode": lobbyCode,
         "lobbyType": lobbyType,
-        "isStarted": isStarted,
-        "placeRecommendations": placeRecommendations
+        "lobbyStage": lobbyStage,
+        'startCountDownTime': startCountDownTime,
+        "placeRecommendations": placeRecommendations,
+        'numberOfUsers': numberOfUsers,
+        'winningPlaceIndex': winningPlaceIndex,
       };
 }

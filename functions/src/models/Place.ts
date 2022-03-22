@@ -13,9 +13,12 @@ export class Place {
     priceLevel: number;
     location: UserLocation;
     photos: string[];
+    placeId: string;
 
-    constructor(placeJson: AxiosResponse<any, any>) {
+    constructor(placeJson: AxiosResponse<any, any>, placeId: string) {
         const data = placeJson.data["result"];
+        console.log("new place: " + placeId);
+        this.placeId = placeId;
         this.name = data["name"];
         this.address = data["formatted_address"];
         this.phoneNumber = data["formatted_phone_number"];
@@ -23,7 +26,7 @@ export class Place {
         this.website = data["website"];
         this.rating = data["rating"];
         this.userRatingsTotal = data["user_ratings_total"];
-        this.priceLevel = data["priceLevel"];
+        this.priceLevel = data["price_level"];
         this.location = new UserLocation(data["geometry"]["location"]["lat"], data["geometry"]["location"]["lng"]);
 
         this.photos = [];
@@ -64,5 +67,17 @@ export class Place {
                 bestRatedPlace = place;*/
         });
         return bestRatedPlace;
+    }
+
+    static getTop3(places: Place[]) {
+        const bestPlaces: Place[] = [];
+        for (let i = 0; i < 3; i++) {
+            if (this.getBestRating(places) == null)
+                return;
+            bestPlaces[i] = JSON.parse(JSON.stringify(this.getBestRating(places)));
+            const indexToRemove = places.findIndex((place) => place.name == bestPlaces[i].name);
+            places.splice(indexToRemove, 1);
+        }
+        return bestPlaces;
     }
 }

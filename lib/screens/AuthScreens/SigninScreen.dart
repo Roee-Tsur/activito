@@ -1,13 +1,12 @@
-import 'package:activito/models/ActivitoUser.dart';
+import 'package:activito/nice_widgets/AuthScreen.dart';
 import 'package:activito/screens/AuthScreens/ProfileImagePickerScreen.dart';
-import 'package:activito/services/AuthService.dart';
-import 'package:activito/services/Globals.dart';
-import 'package:activito/services/Server.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:load/load.dart';
 
-import 'SignUpScreen.dart';
+import '../../services/AuthService.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -17,78 +16,71 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-        child: Scaffold(
-      appBar: AppBar(
-        leading: BackButton(
-          color: Colors.black,
-        ),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              Globals.appName + '\nLogin',
-              textAlign: TextAlign.center,
-            ),
-            TextButton(
-                onPressed: loginWithEmail, child: Text('log in with email')),
-            TextButton(
-                onPressed: loginWithGoogle, child: Text('log in with google')),
-            TextButton(
-                onPressed: loginWithFacebook,
-                child: Text('log in with facebook')),
-            TextButton(
-              onPressed: () => continueToSignUpScreen(),
-              child: Text("new to ${Globals.appName}?\nsign up here!"),
-            )
-          ],
-        ),
-      ),
-    ));
+    return AuthScreen(
+        isLogin: true,
+        emailAction: loginWithEmail,
+        facebookAction: loginWithFacebook,
+        googleAction: loginWithGoogle);
   }
 
-  void loginWithEmail() {
-    Fluttertoast.showToast(msg: 'under construction');
-  }
-
-  Future<void> loginWithGoogle() async {
-    final userCredential = await AuthService.signInWithGoogle();
-    if (userCredential == null) {
+  void loginWithEmail(String email, String password) async {
+    showLoadingDialog();
+    bool loginResults = await AuthService.signInWithEmailAndPassword(email, password);
+    if (!loginResults) {
       Fluttertoast.showToast(msg: "Login failed");
       return;
     }
 
-    final uid = AuthService.getCurrentFirebaseUserId();
-    if (userCredential.additionalUserInfo!.isNewUser) {
-      createUserSkipSignUp(uid, userCredential.user!.email);
+    if (AuthService.currentAdditionalUserInfo!.isNewUser) {
+      pickPhotoSkipSignUp();
       return;
     }
 
-    login(uid);
+    loginSuccessful(loginResults);
   }
 
-  void loginWithFacebook() {
-    Fluttertoast.showToast(msg: 'under construction');
+  void loginWithGoogle() async {
+    showLoadingDialog();
+    bool loginResults = await AuthService.signInWithGoogle();
+    if (!loginResults) {
+      Fluttertoast.showToast(msg: "Login failed");
+      return;
+    }
+
+    if (AuthService.currentAdditionalUserInfo!.isNewUser) {
+      pickPhotoSkipSignUp();
+      return;
+    }
+
+    loginSuccessful(loginResults);
+  }
+
+  Future<void>
+  loginWithFacebook() async {
+    bool loginResults = await AuthService.signInWithFacebook();
+    if (!loginResults) {
+      Fluttertoast.showToast(msg: "Login failed");
+      return;
+    }
+
+    ///dont know how to check if first login in facebook YET.
+    // if (AuthService.currentAdditionalUserInfo!.isNewUser) {
+    //   pickPhotoSkipSignUp();
+    //   return;
+    // }
+
+    loginSuccessful(loginResults);
   }
 
   // Navigator.pop returns true to initiate homepage to setState.
-  Future<void> login(String id) async {
-    await AuthService.loginUser(id);
-    Navigator.pop(context, true);
+  void loginSuccessful(bool loginResults) async {
+    hideLoadingDialog();
+    Navigator.pop(context, loginResults);
   }
 
-  void createUserSkipSignUp(String id, String? email) async {
-    await AuthService.createAndLoginUser(id, email!);
+  void pickPhotoSkipSignUp() async {
     final results = Navigator.push(context,
         MaterialPageRoute(builder: (context) => ProfileImagePickerScreen()));
-    Navigator.pop(context, results);
-  }
-
-  continueToSignUpScreen() async {
-    final results = await Navigator.push(
-        context, MaterialPageRoute(builder: (context) => SignUpScreen()));
     Navigator.pop(context, results);
   }
 }

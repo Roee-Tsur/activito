@@ -1,21 +1,27 @@
-class ActivitoUser {
-  String id;
-  String email;
-  late String nickName;
-//TODO: home location
+import 'package:activito/models/ActivitoFirestoreModel.dart';
 
-  ActivitoUser(this.id, this.email);
+class ActivitoUser extends ActivitoFirestoreModel {
+  late String id;
+  late String? photoUrl;
+  late List<String>? friends;
+  //late String nickName;
 
-  ActivitoUser.fromJson(Map<String, Object?> json)
-      : this(json['id'] as String, json['email'] as String);
+  ActivitoUser(this.id, this.photoUrl);
 
-  void setNickName(String newNickName) {
-    this.nickName = newNickName;
+  ActivitoUser.fromJson(Map<String, Object?> json) {
+    this.id = validateJsonField(json['id']);
+    this.photoUrl = validateJsonField(json['photoUrl']);
+    //this.nickName = validateJsonField(json['nickName']);
+
+    this.friends = [];
+    List friendsList =
+    List<String>.from(validateJsonField(json["friends"]));
+    friendsList.forEach((value) {
+      this.friends!.add(value);
+    });
   }
 
-  String getId() => id;
 
-  String getNickName() => nickName;
-
-  Map<String, Object?> toJson() => {'id': id, 'email': nickName};
+  Map<String, Object?> toJson() =>
+      {'id': id, 'photoUrl': photoUrl, 'friends' : friends /*'nickName': nickName*/};
 }

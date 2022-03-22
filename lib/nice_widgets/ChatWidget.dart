@@ -51,19 +51,6 @@ class _ChatBodyWidgetState extends State<ChatBodyWidget> {
         ],
       ),
     );
-    return ListView(
-      physics: AlwaysScrollableScrollPhysics(),
-      reverse: true,
-      children: [
-        Align(
-            alignment: Alignment.bottomCenter,
-            child: ChatTextField(widget.size, addMessage)),
-        Padding(
-          padding: EdgeInsets.only(bottom: 12),
-          child: getMessagesList(),
-        )
-      ],
-    );
   }
 
   Widget getMessagesList() {

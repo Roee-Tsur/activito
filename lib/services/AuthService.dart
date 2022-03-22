@@ -1,67 +1,133 @@
-import 'package:activito/models/ActivitoUser.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+import '../models/ActivitoUser.dart';
 import 'Server.dart';
 
-enum SignInMethods { GOOGLE, FACEBOOK, NONE, EMAIL }
+enum SignInMethods { GOOGLE, FACEBOOK, EMAIL }
 
 class AuthService {
-  static FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
-  static ActivitoUser? currentUser = null;
+  static FirebaseAuth firebaseAuth = FirebaseAuth.instance;
+  static User? currentUser;
+  static ActivitoUser? currentActivitoUser;
+  static AdditionalUserInfo? currentAdditionalUserInfo;
 
-  static SignInMethods _signInMethod = SignInMethods.NONE;
+  static Future<bool> SignUpWithEmailAndPassword(
+      String email, String password) async {
+    try {
+      final userCredential = await firebaseAuth.createUserWithEmailAndPassword(
+          email: email, password: password);
 
-  static Future<UserCredential?> signInWithGoogle() async {
+      currentUser = userCredential.user;
+      currentAdditionalUserInfo = userCredential.additionalUserInfo;
+    } on FirebaseAuthException catch (e) {
+      Fluttertoast.showToast(msg: e.message!, toastLength: Toast.LENGTH_LONG);
+      print('email signup in error: ${e.message}');
+    }
+
+    createOrUpdateFirestoreUser();
+    return currentUser != null;
+  }
+
+  static Future<bool> signInWithGoogle() async {
     GoogleSignInAccount? userGoogleLoginAccount =
-    await GoogleSignIn(scopes: ['email']).signIn();
+        await GoogleSignIn(scopes: ['email']).signIn();
 
     GoogleSignInAuthentication googleSignInAuth =
-    await userGoogleLoginAccount!.authentication;
+        await userGoogleLoginAccount!.authentication;
 
     AuthCredential authCredential = GoogleAuthProvider.credential(
         idToken: googleSignInAuth.idToken,
         accessToken: googleSignInAuth.accessToken);
 
     UserCredential userCredential =
-    await _firebaseAuth.signInWithCredential(authCredential);
+        await firebaseAuth.signInWithCredential(authCredential);
 
-    return userCredential;
+    currentUser = userCredential.user;
+    currentAdditionalUserInfo = userCredential.additionalUserInfo;
+
+    createOrUpdateFirestoreUser();
+    return currentUser != null;
   }
 
-  static Future<void> loginUser(String uid) async {
-    final user = await Server.getUser(uid);
-    if (user != null) {
-      _setCurrentUser(user);
-      await Server.initProfilePic();
+  static Future<bool> signInWithEmailAndPassword(
+      String email, String password) async {
+    try {
+      final userCredential = await firebaseAuth.signInWithEmailAndPassword(
+          email: email, password: password);
+
+      currentUser = userCredential.user;
+      currentAdditionalUserInfo = userCredential.additionalUserInfo;
+    } on FirebaseAuthException catch (e) {
+      Fluttertoast.showToast(msg: e.message!, toastLength: Toast.LENGTH_LONG);
+      print('email sign in error: ${e.message}');
     }
+
+    createOrUpdateFirestoreUser();
+    return currentUser != null;
   }
 
-  static Future createAndLoginUser(String uid, String? email) async {
-    if (email == null || email.isEmpty) email = "null";
-    final user = await Server.createActivitoUser(uid, email);
-    _setCurrentUser(user);
+  static Future<bool> signInWithFacebook() async {
+    final loginResult = await FacebookAuth.instance.login();
+
+    final OAuthCredential facebookAuthCredential =
+        FacebookAuthProvider.credential(loginResult.accessToken!.token);
+
+    currentUser = firebaseAuth.currentUser;
+
+    createOrUpdateFirestoreUser();
+    return currentUser != null;
   }
 
-  static String getCurrentFirebaseUserId() => _firebaseAuth.currentUser!.uid;
+  static void initUser() {
+    currentUser = firebaseAuth.currentUser;
+    print("init user: ${currentUser.toString()}");
 
-  static void _setCurrentUser(ActivitoUser user) {
-    currentUser = user;
+    firebaseAuth.userChanges().listen((event) {
+      currentUser = event;
+    });
+  }
+
+  static bool isUserConnected() => currentUser != null;
+
+  static String getCurrentUserProfilePic() {
+    if (isUserConnected() && currentUser!.photoURL != null)
+      return currentUser!.photoURL!;
+    else
+      return '';
   }
 
   static void logout() {
-    _firebaseAuth.signOut();
     currentUser = null;
+    firebaseAuth.signOut();
   }
 
-  static initUser() async {
-    if (_firebaseAuth.currentUser != null)
-      await loginUser(_firebaseAuth.currentUser!.uid);
-
-    Server.initProfilePic();
+  static Future<void> deleteProfilePic() async {
+    await currentUser!.updatePhotoURL("");
+    createOrUpdateFirestoreUser();
   }
 
-  static String getCurrentUserId() => currentUser!.id;
+  static setProfilePic(String photoURL) async {
+    await currentUser!.updatePhotoURL(photoURL);
+    createOrUpdateFirestoreUser();
+  }
 
-  static bool isUserConnected() => currentUser != null;
+  static void resetPassword(String email) {
+    firebaseAuth.sendPasswordResetEmail(email: email);
+  }
+
+  static Future<void> createOrUpdateFirestoreUser() async {
+    if (currentUser != null)
+      currentActivitoUser = await Server.createUser(currentUser!);
+  }
+
+/*static addFriend(String friendId) {
+    Server.addFriend(currentUser!.uid, friendId);
+  }
+
+  static removeFriend(String friendId) {
+    Server.removeFriend(currentUser!.uid, friendId);
+  }*/
 }

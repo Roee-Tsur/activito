@@ -23,11 +23,15 @@ export const createLobby = functions.region("europe-west1").https.onCall(async (
     id: newLobbyDoc.id,
     lobbyCode: await generateLobbyCode(),
     lobbyType: data["lobbyType"],
-    isStarted: false,
-    placeRecommendations: {}
+    lobbyStage: "open",
+    placeRecommendations: [],
+    numberOfUsers: 0,
+    winningPlaceIndex: -1
   } as Lobby;
 
   newLobbyDoc.set(newLobby);
+  newLobbyDoc.collection("individualFields").doc("initialVotesCount").set({ initialVotesCount: 0 });
+  newLobbyDoc.collection("individualFields").doc("finalVotes").set({ 0: 0, 1: 0, 2: 0 }); //number of fields need to match place recommendations count
   return newLobby;
 });
 
@@ -38,24 +42,34 @@ export const joinLobby = functions.region("europe-west1").https.onCall(async (da
   const lobbyUser = data["lobbyUser"] as LobbyUser;
 
   const lobbyDocQuery = await firestore.collection("lobbies").where("lobbyCode", "==", enteredCode).get();
-  const lobbyRef = lobbyDocQuery.docs[0];
-
-  firestore.collection("lobbies")
-    .doc(lobbyRef.id)
-    .collection("users").doc(lobbyUser.id).set(lobbyUser);
+  const lobbyRef = lobbyDocQuery.docs[0].ref;
+  const lobby = lobbyDocQuery.docs[0].data() as Lobby;
 
   if (lobbyDocQuery.empty)
     return {
       requestStatus: 1,
       reason: "no lobby found for the entered code"
+    };
+  if (lobby.lobbyStage == "voting")
+    return {
+      requestStatus: 1,
+      reason: "lobby already in proggress"
     }
-  else
+  else {
+    lobbyUser.userNum = lobby.numberOfUsers;
+    lobby.numberOfUsers++;
+
+    lobbyRef
+      .collection("users").doc(lobbyUser.id).set(lobbyUser);
+    lobbyRef.update({ numberOfUsers: lobby.numberOfUsers });
+
     return {
       requestStatus: 0,
       reason: "joined successfully",
-      lobbyId: lobbyRef.id,
+      lobbyId: lobby.id,
       lobbyUserId: lobbyUser.id
     }
+  }
 });
 
 exports.addTimeStampToMessage = functions.region("europe-west1").firestore
@@ -67,31 +81,53 @@ exports.addTimeStampToMessage = functions.region("europe-west1").firestore
     firestore.collection("lobbies").doc(lobbyId).collection("messages").doc(messageId).update({ timestamp: timestamp })
   });
 
-//generate lobby code and makes sure code is unique
-async function generateLobbyCode(): Promise<string> {
-  let code = "";
-  let isUnique = false;
-  while (!isUnique) {
-    for (let i = 0; i < 6; i++)
-      code += String.fromCharCode(Math.floor(Math.random() * (26)) + 65);
-    const DBQuery = await firestore.collection("lobbies").where("lobbyCode", "==", code).get();
-    isUnique = DBQuery.empty;
-  }
-  return code;
-}
+exports.checkVotesCount = functions.region("europe-west1").firestore
+  .document("lobbies/{lobbyId}/individualFields/initialVotesCount")
+  .onUpdate((snap, context) => {
+    const numberOfUsers = snap.after.data().numberOfUsers;
+    const numberOfInitialVotes = snap.after.data().initialVotesCount;
+    if (numberOfUsers <= numberOfInitialVotes) { //true when everybody sent initial vote
+      const lobbyId = context.params.lobbyId;
+      const timestamp = firebaseAdmin.firestore.FieldValue.serverTimestamp();
+
+      firestore.collection("lobbies").doc(lobbyId).update({ lobbyStage: "final votes", startCountDownTime: timestamp }); //adds time for client side to show timer
+    }
+  });
+
+exports.checkFinalVotes = functions.region("europe-west1").firestore
+  .document("lobbies/{lobbyId}/individualFields/finalVotes")
+  .onUpdate((snap, context) => {
+    const numberOfUsers = snap.after.data().numberOfUsers;
+    const docData = snap.after.data();
+    const numberOfVotes = docData["0"] + docData["1"] + docData["2"];
+    if (numberOfUsers <= numberOfVotes) { //true when all the final votes are in
+      const lobbyId = context.params.lobbyId;
+
+      const places = [docData["0"], docData["1"], docData["2"]] as number[];
+      const winningPlaceIndex = places.indexOf(Math.max(docData["0"], docData["1"], docData["2"]));
+
+      firestore.collection("lobbies").doc(lobbyId).update({ lobbyStage: "done", winningPlaceIndex: winningPlaceIndex }); //adds time for client side to show timer
+    }
+  });
 
 export const getPlacesRecommendations = functions.region("europe-west1").https.onCall(async (data, context) => {
   functions.logger.info("entered getPlacesRecommendations", { structuredData: true });
   const lobbyId = data["lobbyId"] as string;
 
+  //update lobby stage to: looking for places
+  firestore.collection("lobbies").doc(lobbyId).update({lobbyStage: "finding places"});
+
   const users = await firestore.collection("lobbies").doc(lobbyId).collection("users").get();
   const userLocations: UserLocation[] = [];
+
+  //adds total number of users to initiadlVotesCount to check when to end voting
+  firestore.collection("lobbies").doc(lobbyId).collection("individualFields").doc("initialVotesCount").update({ numberOfUsers: users.size })
+  firestore.collection("lobbies").doc(lobbyId).collection("individualFields").doc("finalVotes").update({ numberOfUsers: users.size })
 
   users.forEach(doc => {
     userLocations.push(doc.data()["userLocation"])
   });
 
-  //improve radius and check more then 0 places retrived
   const config = URLHelper.getNearbySearchURL(userLocations, 1);
   let requestResults = await axios(config);
   let counter = 1;
@@ -109,8 +145,7 @@ export const getPlacesRecommendations = functions.region("europe-west1").https.o
     const placeDetailsURL = URLHelper.getPlaceDetailsURL(result["place_id"]);
     promises.push(axios(placeDetailsURL).
       then(placeDetails => {
-        console.log(placeDetails.data);
-        places.push(new Place(placeDetails));
+        places.push(new Place(placeDetails, result["place_id"]));
       })
       .catch(error => console.error(error))
     );
@@ -119,17 +154,28 @@ export const getPlacesRecommendations = functions.region("europe-west1").https.o
 
   const placeRecommendations = pickBestPlaces(places);
 
-  firestore.collection("lobbies").doc(lobbyId).update({ placeRecommendations: placeRecommendations, isStarted: true });
+  firestore.collection("lobbies").doc(lobbyId).update({ placeRecommendations: placeRecommendations, lobbyStage: "voting" });
 });
 
+//generate lobby code and makes sure code is unique
+async function generateLobbyCode(): Promise<string> {
+  let code = "";
+  let isUnique = false;
+  while (!isUnique) {
+    for (let i = 0; i < 6; i++)
+      code += String.fromCharCode(Math.floor(Math.random() * (26)) + 65);
+    const DBQuery = await firestore.collection("lobbies").where("lobbyCode", "==", code).get();
+    isUnique = DBQuery.empty;
+  }
+  return code;
+}
+
+//returns 3 places with highest ratings
 function pickBestPlaces(places: Place[]) {
   if (places == null || places.length == 0)
     return null;
 
-  const placeRecommendations = {
-    cheapest: JSON.parse(JSON.stringify(Place.getCheapest(places))),
-    bestRating: JSON.parse(JSON.stringify(Place.getBestRating(places)))
-  };
+  const placeRecommendations = Place.getTop3(places);
 
   return placeRecommendations;
 }

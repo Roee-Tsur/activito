@@ -1,7 +1,7 @@
 import 'package:activito/models/LobbySession.dart';
 import 'package:activito/models/UserLocation.dart';
 import 'package:activito/screens/LobbyScreen.dart';
-import 'package:activito/services/CustomWidgets.dart';
+import 'package:activito/nice_widgets/CustomWidgets.dart';
 import 'package:activito/services/Server.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -10,6 +10,7 @@ import 'package:location/location.dart';
 class UserLocationScreen extends StatefulWidget {
   LobbySession lobbySession;
   UserLocation currentUserLocation;
+  late Marker marker;
 
   UserLocationScreen(this.lobbySession, this.currentUserLocation);
 
@@ -18,7 +19,7 @@ class UserLocationScreen extends StatefulWidget {
 }
 
 class _UserLocationScreenState extends State<UserLocationScreen> {
-  UserLocationScreenBody? body;
+  GoogleMapController? mapController;
 
   @override
   void initState() {
@@ -29,35 +30,75 @@ class _UserLocationScreenState extends State<UserLocationScreen> {
         }
       });
     });
-    body = UserLocationScreenBody(widget.currentUserLocation);
+    widget.marker = Marker(
+        markerId: MarkerId('0'),
+        draggable: false,
+        position: widget.currentUserLocation.toLatLng());
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-        child: Scaffold(
-      appBar: AppBar(
-        title: Text('Choose your desired location'),
-      ),
-      body: body,
-      floatingActionButton: Container(
-        width: 80,
-        height: 80,
-        child: FittedBox(
-          child: FloatingActionButton(
-            child: Icon(Icons.done_outline_rounded),
-            onPressed: () {
-              continueToLobbyScreen(UserLocation.fromDynamic(body!.marker.position));
-            },
+    return WillPopScope(
+      onWillPop: () {
+        return CustomWidgets.showExitConfirmationDialog(
+          lobbySession: widget.lobbySession,
+          context: context,
+        );
+      },
+      child: SafeArea(
+          child: Scaffold(
+        appBar: AppBar(
+          centerTitle: true,
+          title: Text('Choose your location'),
+        ),
+        body: Stack(
+          children: [
+            GoogleMap(
+              zoomControlsEnabled: false,
+              initialCameraPosition: CameraPosition(
+                  target: widget.currentUserLocation.toLatLng(), zoom: 11),
+              onMapCreated: (mapController) =>
+                  this.mapController = mapController,
+              markers: {widget.marker},
+              onTap: onTap,
+            ),
+            Align(
+                alignment: Alignment.bottomRight,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: FloatingActionButton(
+                    heroTag: 1,
+                    onPressed: () {
+                      mapController!.animateCamera(CameraUpdate.newLatLng(
+                          widget.currentUserLocation.toLatLng()));
+                      onTap(widget.currentUserLocation.toLatLng());
+                    },
+                    child: Icon(Icons.my_location),
+                  ),
+                ))
+          ],
+        ),
+        floatingActionButton: Container(
+          width: 80,
+          height: 80,
+          child: FittedBox(
+            child: FloatingActionButton(
+              heroTag: 2,
+              child: Icon(Icons.done_outline_rounded),
+              onPressed: () {
+                continueToLobbyScreen(
+                    UserLocation.fromDynamic(widget.marker.position));
+              },
+            ),
           ),
         ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-    ));
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      )),
+    );
   }
 
-  ///returns 0-"current" or 1-"Other"
+  ///returns 0-"current location" or 1-"Other location"
   Future showLocationOptionDialog(BuildContext context) async =>
       await CustomWidgets.showTwoOptionDialog(
           context: context,
@@ -78,51 +119,21 @@ class _UserLocationScreenState extends State<UserLocationScreen> {
   void continueToLobbyScreen(UserLocation userLocation) {
     Server.updateUserLocation(widget.lobbySession.lobby!,
         widget.lobbySession.thisLobbyUser!.id, userLocation);
+    widget.lobbySession.thisLobbyUser!.userLocation = userLocation;
     Navigator.pop(context);
     Navigator.push(
         context,
         MaterialPageRoute(
-            builder: (context) => LobbyScreen(widget.lobbySession, userLocation)));
-  }
-}
-
-class UserLocationScreenBody extends StatefulWidget {
-  UserLocation currentUserLocation;
-  late Marker marker;
-
-  UserLocationScreenBody(this.currentUserLocation) {
-    marker = Marker(
-        markerId: MarkerId('0'),
-        draggable: false,
-        position: currentUserLocation.toLatLng());
-  }
-
-  @override
-  _UserLocationScreenBodyState createState() => _UserLocationScreenBodyState();
-}
-
-class _UserLocationScreenBodyState extends State<UserLocationScreenBody> {
-  GoogleMapController? mapController;
-
-
-
-  @override
-  Widget build(BuildContext context) {
-    return GoogleMap(
-      zoomControlsEnabled: false,
-      initialCameraPosition: CameraPosition(
-          target: widget.currentUserLocation.toLatLng(), zoom: 11),
-      onMapCreated: (mapController) => this.mapController = mapController,
-      markers: {widget.marker},
-      onTap: onTap,
-    );
+            builder: (context) =>
+                LobbyScreen(widget.lobbySession, userLocation)));
   }
 
   void onTap(LatLng argument) {
-    //mapController!.moveCamera() center the new marker when selected
     setState(() {
       widget.marker =
           Marker(markerId: MarkerId('0'), draggable: false, position: argument);
+      mapController!
+          .animateCamera(CameraUpdate.newLatLng(widget.marker.position));
     });
   }
 }

@@ -5,17 +5,17 @@ import 'package:activito/models/ActivitoUser.dart';
 import 'package:activito/models/LobbySession.dart';
 import 'package:activito/models/LobbyUser.dart';
 import 'package:activito/models/Message.dart';
-import 'package:activito/models/Place.dart';
 import 'package:activito/models/UserLocation.dart';
+import 'package:activito/nice_widgets/LobbyPlacesList.dart';
+import 'package:activito/screens/LobbyScreen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:flutter/widgets.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:uuid/uuid.dart';
 
 import '../models/Lobby.dart';
+import '../models/Place.dart';
 import 'AuthService.dart';
 
 class Server {
@@ -74,79 +74,64 @@ class Server {
     return joinLobby(enteredCode: lobbyCode, lobbyUser: lobbyUser);
   }
 
-  static Future<ActivitoUser> createActivitoUser(
-      String id, String email) async {
-    final newUser = ActivitoUser(id, email);
-    await _usersCollection.doc(id).set(newUser);
-    return newUser;
-  }
-
-  static Future<ActivitoUser?> getUser(String id) async {
-    final result = (await _usersCollection.doc(id).get()).data();
-    if (result == null) return null;
-    return result as ActivitoUser;
-  }
-
   static Future<void> setProfilePic(File newProfilePic) async {
-    String profilePicPath = (await getApplicationDocumentsDirectory()).path +
-        pathSeparator +
-        "profilePic.jpg";
-    await newProfilePic.copy(profilePicPath);
-
-    String serverPicPath = "profilePics/${AuthService.getCurrentUserId()}.jpg";
+    String serverPicPath = "profilePics/${AuthService.currentUser!.uid}.jpg";
     try {
       _storage.ref(serverPicPath).putFile(newProfilePic);
     } on Exception catch (e) {
       Fluttertoast.showToast(msg: "upload failed");
       print(e);
     }
+
+    AuthService.setProfilePic(
+        await _storage.ref(serverPicPath).getDownloadURL());
   }
 
-  static Future<Image> getCurrentUserProfilePic() async {
-    String filePath = (await getApplicationDocumentsDirectory()).path +
-        pathSeparator +
-        "profilePic.jpg";
-    File profilePicFile = File(filePath);
-
-    if (!(await profilePicFile.exists()))
-      return Image.asset("assets/defaultProfilePic.jpg");
-
-    return Image.file(profilePicFile);
-  }
-
-  static Future<Image> getUserProfilePic(String userID) async {
-    //not sure if the directory is correct...
-    String filePath = (await getTemporaryDirectory()).path +
-        pathSeparator +
-        "profilePic-$userID.jpg";
-    File profilePicFile = File(filePath);
-    String serverPicPath = "profilePics/$userID.jpg";
-    await _storage.ref(serverPicPath).writeToFile(profilePicFile);
-
-    return Image.file(profilePicFile);
-  }
-
-  /// this method deletes any existing profile picture. when user retries to load the pic Server will return null and default pic will be shown
-  static Future deleteProfilePic() async {
-    await _storage
-        .ref("profilePics/${AuthService.getCurrentUserId()}.jpg")
-        .delete();
-    String localProfilePicPath =
-        (await getApplicationDocumentsDirectory()).path +
-            pathSeparator +
-            "profilePic.jpg";
-    File localProfilePicFile = File(localProfilePicPath);
-    await localProfilePicFile.delete();
-  }
-
-  static Future initProfilePic() async {
-    String filePath = (await getApplicationDocumentsDirectory()).path +
-        pathSeparator +
-        "profilePic.jpg";
-    File profilePicFile = File(filePath);
-    String serverPicPath = "profilePics/${AuthService.getCurrentUserId()}.jpg";
-    await _storage.ref(serverPicPath).writeToFile(profilePicFile);
-  }
+  // static Future<Image> getCurrentUserProfilePic() async {
+  //   String filePath = (await getApplicationDocumentsDirectory()).path +
+  //       pathSeparator +
+  //       "profilePic.jpg";
+  //   File profilePicFile = File(filePath);
+  //
+  //   if (!(await profilePicFile.exists()))
+  //     return Image.asset("assets/defaultProfilePic.jpg");
+  //
+  //   return Image.file(profilePicFile);
+  // }
+  //
+  // static Future<Image> getUserProfilePic(String userID) async {
+  //   //not sure if the directory is correct...
+  //   String filePath = (await getTemporaryDirectory()).path +
+  //       pathSeparator +
+  //       "profilePic-$userID.jpg";
+  //   File profilePicFile = File(filePath);
+  //   String serverPicPath = "profilePics/$userID.jpg";
+  //   await _storage.ref(serverPicPath).writeToFile(profilePicFile);
+  //
+  //   return Image.file(profilePicFile);
+  // }
+  //
+  // /// this method deletes any existing profile picture. when user retries to load the pic Server will return null and default pic will be shown
+  // static Future deleteProfilePic() async {
+  //   await _storage
+  //       .ref("profilePics/${AuthService.getCurrentUserId()}.jpg")
+  //       .delete();
+  //   String localProfilePicPath =
+  //       (await getApplicationDocumentsDirectory()).path +
+  //           pathSeparator +
+  //           "profilePic.jpg";
+  //   File localProfilePicFile = File(localProfilePicPath);
+  //   await localProfilePicFile.delete();
+  // }
+  //
+  // static Future initProfilePic() async {
+  //   String filePath = (await getApplicationDocumentsDirectory()).path +
+  //       pathSeparator +
+  //       "profilePic.jpg";
+  //   File profilePicFile = File(filePath);
+  //   String serverPicPath = "profilePics/${AuthService.getCurrentUserId()}.jpg";
+  //   await _storage.ref(serverPicPath).writeToFile(profilePicFile);
+  // }
 
   static Stream<DocumentSnapshot> getLobbyEventListener(Lobby lobby) =>
       _lobbiesCollection.doc(lobby.id).snapshots();
@@ -212,16 +197,49 @@ class Server {
       "lobbyId": lobby.id,
     };
     _functions.httpsCallable("getPlacesRecommendations").call(parameters);
-    /*final results = (await _functions
-            .httpsCallable("getPlacesRecommendations")
-            .call(parameters))
-        .data;
-    List<Place> places = List.generate(results['length'], (index) {
-      final map = Map<String, dynamic>.from(results['places'][index]);
-      print(map);
-      return Place.fromJson(map);
-    });
-    print(places);
-    return places;*/
   }
+
+  static Future<ActivitoUser> createUser(User currentUser) async {
+    await _usersCollection.doc(currentUser.uid).set(
+        ActivitoUser(currentUser.uid, currentUser.photoURL),
+        SetOptions(merge: true));
+    return (await _usersCollection.doc(currentUser.uid).get()).data()
+        as ActivitoUser;
+  }
+
+  static void increaseInitialVoteCounter(Lobby lobby) {
+    _lobbiesCollection
+        .doc(lobby.id)
+        .collection('individualFields')
+        .doc("initialVotesCount")
+        .update({'initialVotesCount': FieldValue.increment(1)});
+  }
+
+  static void addFinalVote(Lobby lobby, int voteIndex) {
+    print('updating final votes');
+    _lobbiesCollection
+        .doc(lobby.id)
+        .collection("individualFields")
+        .doc('finalVotes')
+        .set({voteIndex.toString(): FieldValue.increment(1)}, SetOptions(merge: true));
+    
+  }
+
+  static void exitLobby(LobbySession lobbySession) {
+    LobbyScreen.messages = null;
+    LobbyPlacesList.selectedTile = null;
+    LobbyPlacesList.votedIndex = null;
+  }
+
+/*static void addFriend(String currentUserId, String friendId) {
+    _usersCollection.doc(currentUserId).update({
+      'friends': FieldValue.arrayUnion([friendId])
+    });
+  }
+
+  static void removeFriend(String currentUserId, String friendId) {
+    _usersCollection.doc(currentUserId).update({
+      'friends': FieldValue.arrayRemove([friendId])
+    });
+  }*/
 }
