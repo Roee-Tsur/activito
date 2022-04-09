@@ -115,7 +115,7 @@ export const getPlacesRecommendations = functions.region("europe-west1").https.o
   const lobbyId = data["lobbyId"] as string;
 
   //update lobby stage to: looking for places
-  firestore.collection("lobbies").doc(lobbyId).update({lobbyStage: "finding places"});
+  firestore.collection("lobbies").doc(lobbyId).update({ lobbyStage: "finding places" });
 
   const users = await firestore.collection("lobbies").doc(lobbyId).collection("users").get();
   const userLocations: UserLocation[] = [];
@@ -133,6 +133,7 @@ export const getPlacesRecommendations = functions.region("europe-west1").https.o
   let counter = 1;
 
   while (requestResults.data["results"].length <= 1) {
+    console.log("looking for places attempt number: " + counter);
     counter += 1;
     const config = URLHelper.getNearbySearchURL(userLocations, counter);
     requestResults = await axios(config);
@@ -155,6 +156,23 @@ export const getPlacesRecommendations = functions.region("europe-west1").https.o
   const placeRecommendations = pickBestPlaces(places);
 
   firestore.collection("lobbies").doc(lobbyId).update({ placeRecommendations: placeRecommendations, lobbyStage: "voting" });
+});
+
+export const userExitLobby = functions.region("europe-west1").https.onCall(async (data, context) => {
+  functions.logger.info("entered userExitLobby", { structuredData: true });
+  const lobbyId = data["lobbyId"] as string;
+  const userId = data["userId"] as string;
+
+  const lobbyRef = firestore.collection("lobbies").doc(lobbyId);
+
+  lobbyRef.collection("users").doc(userId).delete();
+  await lobbyRef.update({ numberOfUsers: firebaseAdmin.firestore.FieldValue.increment(-1) })
+  lobbyRef.get().then((lobbySnap) => {
+    if (lobbySnap?.data()?.numberOfUsers < 1) {
+      lobbyRef.collection("individualFields").listDocuments().then(docs => { docs.forEach(doc => { doc.delete(); }) });
+      lobbyRef.delete();
+    }
+  });
 });
 
 //generate lobby code and makes sure code is unique

@@ -12,7 +12,7 @@ void main() async {
 Future<void> initializeApp() async {
   ///TODO: fix facebook login, exit galleryscreen with swipe
   ///change app name: WTD(what to do), wtg(where to go)
-  ///when leader exits lobby declare new leader
+  ///when leader exits lobby declare new leader (when anyone exits in general)
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   AuthService.initUser();

@@ -221,11 +221,16 @@ class Server {
         .doc(lobby.id)
         .collection("individualFields")
         .doc('finalVotes')
-        .set({voteIndex.toString(): FieldValue.increment(1)}, SetOptions(merge: true));
-    
+        .set({voteIndex.toString(): FieldValue.increment(1)},
+            SetOptions(merge: true));
   }
 
   static void exitLobby(LobbySession lobbySession) {
+    final parameters = {
+      "userId": lobbySession.thisLobbyUser!.id,
+      "lobbyId": lobbySession.lobby!.id
+    };
+    _functions.httpsCallable("userExitLobby").call(parameters);
     LobbyScreen.messages = null;
     LobbyPlacesList.selectedTile = null;
     LobbyPlacesList.votedIndex = null;

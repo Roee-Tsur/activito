@@ -17,7 +17,6 @@ export class Place {
 
     constructor(placeJson: AxiosResponse<any, any>, placeId: string) {
         const data = placeJson.data["result"];
-        console.log("new place: " + placeId);
         this.placeId = placeId;
         this.name = data["name"];
         this.address = data["formatted_address"];
@@ -35,6 +34,9 @@ export class Place {
             const photoUrl = URLHelper.getPhotoURL(element["photo_reference"]);
             this.photos.push(photoUrl);
         });
+
+        console.log("new place: " + this.name);
+
     }
 
     static getCheapest(places: Place[]): Place {

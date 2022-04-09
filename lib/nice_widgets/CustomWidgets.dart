@@ -94,37 +94,40 @@ class CustomWidgets {
         pageBuilder: (context, _, __) {
           return Center(
             child: Card(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text('are you sure you want to quit the lobby?'),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      TextButton(
-                        onPressed: () {
-                          Navigator.pop(context, false);
-                        },
-                        child: Text(
-                          "cancel",
-                          style: TextStyle(color: Colors.green),
+              child: Padding(
+                padding: const EdgeInsets.all(18.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text('are you sure you want to quit the lobby?'),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pop(context, false);
+                          },
+                          child: Text(
+                            "cancel",
+                            style: TextStyle(color: Colors.green),
+                          ),
                         ),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.pop(context, true);
-                          Server.exitLobby(lobbySession);
-                        },
-                        child: Text(
-                          "exit",
-                          style: TextStyle(color: Colors.red),
-                        ),
-                      )
-                    ],
-                  )
-                ],
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pop(context, true);
+                            Server.exitLobby(lobbySession);
+                          },
+                          child: Text(
+                            "exit",
+                            style: TextStyle(color: Colors.red),
+                          ),
+                        )
+                      ],
+                    )
+                  ],
+                ),
               ),
             ),
           );

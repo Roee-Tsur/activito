@@ -23,7 +23,6 @@ import 'package:load/load.dart';
 
 import '../services/Globals.dart';
 
-//TODO: check what happens if 2 markers overlap
 class LobbyScreen extends StatefulWidget {
   LobbySession lobbySession;
   late Stream<DocumentSnapshot> lobbyStream;
