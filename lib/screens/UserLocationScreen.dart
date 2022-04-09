@@ -41,7 +41,7 @@ class _UserLocationScreenState extends State<UserLocationScreen> {
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () {
-        return CustomWidgets.showExitConfirmationDialog(
+        return CustomDialogs.showExitConfirmationDialog(
           lobbySession: widget.lobbySession,
           context: context,
         );
@@ -100,7 +100,7 @@ class _UserLocationScreenState extends State<UserLocationScreen> {
 
   ///returns 0-"current location" or 1-"Other location"
   Future showLocationOptionDialog(BuildContext context) async =>
-      await CustomWidgets.showTwoOptionDialog(
+      await CustomDialogs.showTwoOptionDialog(
           context: context,
           mainTitle: 'What location should we use?',
           title1: 'My current location',

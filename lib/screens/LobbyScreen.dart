@@ -60,13 +60,13 @@ class _LobbyScreenState extends State<LobbyScreen> {
         padding: EdgeInsets.all(28),
         child: Container(
             child: Text(
-              'code: ' + widget.lobbySession.lobby!.lobbyCode,
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-            )),
+          'code: ' + widget.lobbySession.lobby!.lobbyCode,
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+        )),
       ),
     );
 
-    if(!widget.lobbySession.thisLobbyUser!.isLeader)
+    if (!widget.lobbySession.thisLobbyUser!.isLeader)
       _stageTitle = StageTitle(title: 'waiting for lobby the start');
   }
 
@@ -81,7 +81,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
-      onWillPop: () => CustomWidgets.showExitConfirmationDialog(
+      onWillPop: () => CustomDialogs.showExitConfirmationDialog(
           context: context, lobbySession: widget.lobbySession),
       child: SafeArea(
           child: Scaffold(
@@ -121,7 +121,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
     final lobbyListener = widget.lobbyStream.listen((event) {
       setState(() {
         widget.lobbySession.lobby = event.data() as Lobby;
-        if(widget.lobbySession.lobby!.lobbyStage == Lobby.findingPlaces)
+        if (widget.lobbySession.lobby!.lobbyStage == Lobby.findingPlaces)
           _stageTitle = StageTitle(title: 'looking for places');
         if (widget.lobbySession.lobby!.lobbyStage == Lobby.votingStage) {
           startVotingStage();
@@ -231,9 +231,14 @@ class _LobbyScreenState extends State<LobbyScreen> {
     );
   }
 
-  void startVotingStage() {
+  Future<void> startVotingStage() async {
     _lobbyCodeWidget = EmptyContainer();
 
+    if (widget.lobbySession.lobby!.placeRecommendations == null) {
+      await CustomDialogs.showNoPlacesFoundDialog(context, widget.lobbySession);
+      Navigator.pop(context);
+      return;
+    }
     widget.lobbySession.lobby!.placeRecommendations!.forEach((place) {
       print("place: $place");
       addMarker(place: place);

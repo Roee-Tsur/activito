@@ -129,15 +129,15 @@ export const getPlacesRecommendations = functions.region("europe-west1").https.o
   });
 
   const config = URLHelper.getNearbySearchURL(userLocations, 1);
-  let requestResults = await axios(config);
-  let counter = 1;
+  const requestResults = await axios(config);
+  /*let counter = 1;
 
   while (requestResults.data["results"].length <= 1) {
     console.log("looking for places attempt number: " + counter);
     counter += 1;
     const config = URLHelper.getNearbySearchURL(userLocations, counter);
     requestResults = await axios(config);
-  }
+  }*/
 
   const places: Place[] = [];
   const promises: Promise<any>[] = [];

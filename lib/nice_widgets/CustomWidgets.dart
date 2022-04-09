@@ -1,3 +1,4 @@
+import 'package:activito/main.dart';
 import 'package:activito/models/LobbySession.dart';
 import 'package:activito/screens/GalleryScreen.dart';
 import 'package:activito/services/Server.dart';
@@ -8,7 +9,7 @@ import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 
 import 'EmptyContainer.dart';
 
-class CustomWidgets {
+class CustomDialogs {
   static Future showTwoOptionDialog(
       {required BuildContext context,
       required String mainTitle,
@@ -88,7 +89,8 @@ class CustomWidgets {
 
   /// returns true to exit and false to stay
   static Future<bool> showExitConfirmationDialog(
-      {required BuildContext context, required LobbySession lobbySession}) async {
+      {required BuildContext context,
+      required LobbySession lobbySession}) async {
     final results = await showGeneralDialog<bool>(
         context: context,
         pageBuilder: (context, _, __) {
@@ -133,6 +135,40 @@ class CustomWidgets {
           );
         });
     return results!;
+  }
+
+  static Future<void> showNoPlacesFoundDialog(
+      BuildContext context, LobbySession lobbySession) {
+    return showGeneralDialog(
+        context: context,
+        pageBuilder: (_, __, ___) {
+          return Center(
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.all(18.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text("we didn't find any places for you, sorry!"),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => MyHomePage()));
+                      },
+                      child: Text(
+                        "exit",
+                      ),
+                    )
+                  ],
+                ),
+              ),
+            ),
+          );
+        });
   }
 }
 
@@ -231,16 +267,21 @@ class PriceLevelRow extends StatelessWidget {
   }
 }
 
-class ImagesRow extends StatelessWidget {
+class ImagesRow extends StatefulWidget {
   double imageSize;
   List<String> imagesURLs;
 
   ImagesRow({required this.imageSize, required this.imagesURLs});
 
   @override
+  State<ImagesRow> createState() => _ImagesRowState();
+}
+
+class _ImagesRowState extends State<ImagesRow> {
+  @override
   Widget build(BuildContext context) {
     List<Widget> photosWidget = [];
-    imagesURLs.forEach((element) {
+    widget.imagesURLs.forEach((element) {
       photosWidget.add(Flexible(
         fit: FlexFit.loose,
         child: GestureDetector(
@@ -249,14 +290,14 @@ class ImagesRow extends StatelessWidget {
                 context,
                 MaterialPageRoute(
                     builder: (_) => GalleryScreen(
-                          photoUrls: imagesURLs,
-                          firstPage: imagesURLs.indexOf(element),
+                          photoUrls: widget.imagesURLs,
+                          firstPage: widget.imagesURLs.indexOf(element),
                         )));
           },
           child: Container(
             padding: EdgeInsets.only(left: 6),
-            height: imageSize,
-            width: imageSize,
+            height: widget.imageSize,
+            width: widget.imageSize,
             child: ClipRRect(
               borderRadius: BorderRadius.all(Radius.circular(14)),
               child: CachedNetworkImage(
@@ -265,6 +306,12 @@ class ImagesRow extends StatelessWidget {
                 placeholder: (_, __) => Container(
                   color: Colors.grey.shade500,
                 ),
+                errorWidget: (_, __, ___) {
+                  setState(() {
+                    widget.imagesURLs.remove(element);
+                  });
+                  return EmptyContainer();
+                },
               ),
             ),
           ),
@@ -294,11 +341,11 @@ class StageTitle extends StatelessWidget {
     return Align(
       alignment: Alignment.topCenter,
       child: Padding(
-        padding: EdgeInsets.only(top: MediaQuery.of(context).size.height*0.1),
+        padding: EdgeInsets.only(top: MediaQuery.of(context).size.height * 0.1),
         child: Text(
           title,
           style: TextStyle(
-              fontSize: MediaQuery.of(context).size.height*0.05,
+              fontSize: MediaQuery.of(context).size.height * 0.05,
               fontWeight: FontWeight.bold),
         ),
       ),

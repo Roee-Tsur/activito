@@ -156,7 +156,7 @@ class HomeScreenBody extends StatelessWidget {
 
   Future<LobbySession> createLobbyButtonPressed(
       String nickName, BuildContext context) async {
-    String lobbyType = await CustomWidgets.showTwoOptionDialog(
+    String lobbyType = await CustomDialogs.showTwoOptionDialog(
         context: context,
         mainTitle: "What are you looking for?",
         title1: 'something to eat or drink',

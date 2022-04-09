@@ -23,7 +23,7 @@ class Lobby extends ActivitoFirestoreModel {
   late String lobbyCode;
 
   late DateTime? startCountDownTime;
-  late List<Place>? placeRecommendations; //top 3 places
+  List<Place>? placeRecommendations; //top 3 places
   late num numberOfUsers;
   late num? winningPlaceIndex;
 
@@ -39,12 +39,14 @@ class Lobby extends ActivitoFirestoreModel {
     this.startCountDownTime = timestamp == null ? null : timestamp.toDate();
     this.winningPlaceIndex = validateJsonField(json['winningPlaceIndex']);
 
-    this.placeRecommendations = [];
-    List places =
-        List<dynamic>.from(validateJsonField(json["placeRecommendations"]));
-    places.forEach((value) {
-      this.placeRecommendations!.add(Place.fromJson(value));
-    });
+    if (validateJsonField(json["placeRecommendations"] != null)) {
+      this.placeRecommendations = [];
+      List places =
+          List<dynamic>.from(validateJsonField(json["placeRecommendations"]));
+      places.forEach((value) {
+        this.placeRecommendations!.add(Place.fromJson(value));
+      });
+    }
   }
 
   Map<String, Object?> toJson() => {
