@@ -85,7 +85,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
           context: context, lobbySession: widget.lobbySession),
       child: SafeArea(
           child: Scaffold(
-              body: getLobbyScreenBody(),
+              body: _lobbyScreenBody,
               floatingActionButtonLocation:
                   FloatingActionButtonLocation.endFloat,
               floatingActionButton: Padding(
@@ -121,6 +121,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
     final lobbyListener = widget.lobbyStream.listen((event) {
       setState(() {
         widget.lobbySession.lobby = event.data() as Lobby;
+        print ("new lobby: ${widget.lobbySession.lobby!.toJson.toString()}");
         if (widget.lobbySession.lobby!.lobbyStage == Lobby.findingPlaces)
           _stageTitle = StageTitle(title: 'looking for places');
         if (widget.lobbySession.lobby!.lobbyStage == Lobby.votingStage) {
@@ -205,7 +206,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
     }
   }
 
-  Widget? getLobbyScreenBody() {
+  Widget? get _lobbyScreenBody {
     return Stack(
       children: [
         GoogleMap(

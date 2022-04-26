@@ -3,7 +3,6 @@ import 'package:activito/models/LobbySession.dart';
 import 'package:activito/screens/GalleryScreen.dart';
 import 'package:activito/services/Server.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 
@@ -307,9 +306,11 @@ class _ImagesRowState extends State<ImagesRow> {
                   color: Colors.grey.shade500,
                 ),
                 errorWidget: (_, __, ___) {
-                  setState(() {
-                    widget.imagesURLs.remove(element);
-                  });
+                  /*Future.delayed(
+                      Duration(seconds: 1),
+                      () => setState(() {
+                            widget.imagesURLs.remove(element);
+                          }));*/
                   return EmptyContainer();
                 },
               ),

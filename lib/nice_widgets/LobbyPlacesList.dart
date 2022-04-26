@@ -15,7 +15,8 @@ class LobbyPlacesList extends StatefulWidget {
   List<Place> places;
   GoogleMapController mapController;
   LobbySession lobbySession;
-  DraggableScrollableController sheetController = DraggableScrollableController();
+  DraggableScrollableController sheetController =
+      DraggableScrollableController();
 
   LobbyPlacesList({
     required this.places,
@@ -37,7 +38,6 @@ class _LobbyPlacesListState extends State<LobbyPlacesList> {
   Widget build(BuildContext context) {
     List<Widget> placesListTiles = [];
     widget.places.forEach((place) {
-      placesListTiles.add(Icon(Icons.line_axis));
       placesListTiles.add(PlaceListTile(
           place,
           this,
@@ -47,7 +47,7 @@ class _LobbyPlacesListState extends State<LobbyPlacesList> {
     });
     return NotificationListener<DraggableScrollableNotification>(
         child: DraggableScrollableSheet(
-          controller: widget.sheetController,
+            controller: widget.sheetController,
             initialChildSize: 0.35,
             maxChildSize: 0.8,
             minChildSize: 0.1,

@@ -120,7 +120,7 @@ export const getPlacesRecommendations = functions.region("europe-west1").https.o
   const users = await firestore.collection("lobbies").doc(lobbyId).collection("users").get();
   const userLocations: UserLocation[] = [];
 
-  //adds total number of users to initiadlVotesCount to check when to end voting
+  //adds total number of users to initialVotesCount to check when to end voting
   firestore.collection("lobbies").doc(lobbyId).collection("individualFields").doc("initialVotesCount").update({ numberOfUsers: users.size })
   firestore.collection("lobbies").doc(lobbyId).collection("individualFields").doc("finalVotes").update({ numberOfUsers: users.size })
 
@@ -129,7 +129,10 @@ export const getPlacesRecommendations = functions.region("europe-west1").https.o
   });
 
   const config = URLHelper.getNearbySearchURL(userLocations, 1);
+  console.log("nearby search url: " + config);
   const requestResults = await axios(config);
+
+
   /*let counter = 1;
 
   while (requestResults.data["results"].length <= 1) {
