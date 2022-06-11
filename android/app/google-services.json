@@ -7,12 +7,57 @@
   "client": [
     {
       "client_info": {
+        "mobilesdk_app_id": "1:52369180873:android:eef0be3f4e1316dd682518",
+        "android_client_info": {
+          "package_name": "com.example.src"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "52369180873-a4qpie337p60ol9ou82sjav7i0u5t8op.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.src",
+            "certificate_hash": "c9a481aafd6e45af498c4376a8705a623bdd3620"
+          }
+        },
+        {
+          "client_id": "52369180873-96cv9qse46censibplci9tb9a3u0ehtt.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD6dJBBohjbCv1AqvPy4vUqLBCf6gNf7qA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "52369180873-96cv9qse46censibplci9tb9a3u0ehtt.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:52369180873:android:ad4d9caea25a89a0682518",
         "android_client_info": {
           "package_name": "surk.inc.activito"
         }
       },
       "oauth_client": [
+        {
+          "client_id": "52369180873-dhi5j5een2kvmh2nn2dlcpoegerljnb1.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "surk.inc.activito",
+            "certificate_hash": "403c0b93fe3f007369376ccd689db24bf944a820"
+          }
+        },
         {
           "client_id": "52369180873-j3pqgqsfe4704dc6lkhvdfjvmoaj5180.apps.googleusercontent.com",
           "client_type": 1,

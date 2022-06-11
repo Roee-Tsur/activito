@@ -1,10 +1,8 @@
 import 'package:activito/nice_widgets/AuthScreen.dart';
 import 'package:activito/screens/AuthScreens/ProfileImagePickerScreen.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:load/load.dart';
 
 import '../../services/AuthService.dart';
 
@@ -24,7 +22,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void loginWithEmail(String email, String password) async {
-    showLoadingDialog();
+    EasyLoading.show();
     bool loginResults = await AuthService.signInWithEmailAndPassword(email, password);
     if (!loginResults) {
       Fluttertoast.showToast(msg: "Login failed");
@@ -40,7 +38,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void loginWithGoogle() async {
-    showLoadingDialog();
+    EasyLoading.show();
     bool loginResults = await AuthService.signInWithGoogle();
     if (!loginResults) {
       Fluttertoast.showToast(msg: "Login failed");
@@ -74,7 +72,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   // Navigator.pop returns true to initiate homepage to setState.
   void loginSuccessful(bool loginResults) async {
-    hideLoadingDialog();
+    EasyLoading.dismiss();
     Navigator.pop(context, loginResults);
   }
 

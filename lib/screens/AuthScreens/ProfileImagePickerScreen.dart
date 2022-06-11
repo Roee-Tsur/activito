@@ -2,17 +2,15 @@ import 'dart:io';
 import 'package:activito/nice_widgets/CustomWidgets.dart';
 import 'package:activito/services/AuthService.dart';
 import 'package:activito/services/Server.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
 
 class ProfileImagePickerScreen extends StatefulWidget {
-  late Widget pickedPicWidget;
-
-  ProfileImagePickerScreen() {
-    this.pickedPicWidget = Icon(Icons.image, size: 50,);
-  }
+  Widget pickedPicWidget  = Icon(
+    Icons.image,
+    size: 50,
+  );
 
   @override
   State<ProfileImagePickerScreen> createState() =>
@@ -25,16 +23,23 @@ class _ProfileImagePickerScreenState extends State<ProfileImagePickerScreen> {
     return Scaffold(
       body: Center(
         child: InkWell(
-          child: Column(
-            mainAxisSize: MainAxisSize.max,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.center,children: [
-              Text(
-                'click to choose profile picture',style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-                textAlign: TextAlign.center,
-              ),EmptySpace(height: 20),
-              widget.pickedPicWidget,
-            ],
+          child: SizedBox(
+            width: MediaQuery.of(context).size.width,
+            height: MediaQuery.of(context).size.height,
+            child: Column(
+              mainAxisSize: MainAxisSize.max,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'click to choose profile picture',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                  textAlign: TextAlign.center,
+                ),
+                EmptySpace(height: 20),
+                widget.pickedPicWidget,
+              ],
+            ),
           ),
           onTap: pickPicPressed,
         ),
@@ -56,7 +61,7 @@ class _ProfileImagePickerScreenState extends State<ProfileImagePickerScreen> {
     else
       imageSource = ImageSource.camera;
     XFile? pickedPic = await ImagePicker().pickImage(source: imageSource);
-    File? croppedPic = await ImageCropper.cropImage(
+    File? croppedPic = await ImageCropper().cropImage(
         aspectRatio: CropAspectRatio(ratioX: 1, ratioY: 1),
         sourcePath: pickedPic!.path,
         cropStyle: CropStyle.rectangle);

@@ -15,21 +15,18 @@ import 'package:activito/services/Server.dart';
 import 'package:badges/badges.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_countdown_timer/countdown.dart';
 import 'package:flutter_countdown_timer/current_remaining_time.dart';
 import 'package:flutter_countdown_timer/flutter_countdown_timer.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:load/load.dart';
-
-import '../services/Globals.dart';
 
 class LobbyScreen extends StatefulWidget {
-  LobbySession lobbySession;
-  late Stream<DocumentSnapshot> lobbyStream;
-  late Stream<QuerySnapshot<Message>> messagesStream;
-  late Stream<QuerySnapshot<LobbyUser>> usersStream;
-  List<StreamSubscription?> eventListenersList = [];
-  UserLocation initialCameraPosition;
+  final LobbySession lobbySession;
+  late final Stream<DocumentSnapshot> lobbyStream;
+  late final Stream<QuerySnapshot<Message>> messagesStream;
+  late final Stream<QuerySnapshot<LobbyUser>> usersStream;
+  final List<StreamSubscription?> eventListenersList = [];
+  final UserLocation initialCameraPosition;
   static List<Message>? messages;
   int newMessagesIndicator = 0;
 
@@ -57,7 +54,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
     _lobbyCodeWidget = Align(
       alignment: Alignment.topLeft,
       child: Padding(
-        padding: EdgeInsets.all(28),
+        padding: EdgeInsets.only(left: 28,top: 50),
         child: Container(
             child: Text(
           'code: ' + widget.lobbySession.lobby!.lobbyCode,
@@ -83,35 +80,34 @@ class _LobbyScreenState extends State<LobbyScreen> {
     return WillPopScope(
       onWillPop: () => CustomDialogs.showExitConfirmationDialog(
           context: context, lobbySession: widget.lobbySession),
-      child: SafeArea(
-          child: Scaffold(
-              body: _lobbyScreenBody,
-              floatingActionButtonLocation:
-                  FloatingActionButtonLocation.endFloat,
-              floatingActionButton: Padding(
-                padding: EdgeInsets.only(bottom: 40, right: 20),
-                child: Badge(
-                  showBadge: widget.newMessagesIndicator > 0,
-                  badgeContent: Text(widget.newMessagesIndicator.toString(),
-                      style: TextStyle(
-                          color: Colors.white, fontWeight: FontWeight.bold)),
-                  child: FloatingActionButton(
-                    onPressed: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) =>
-                                  ChatWidget(widget.lobbySession)));
-                      setState(() {
-                        widget.newMessagesIndicator = 0;
-                      });
-                    },
-                    child: Icon(
-                      Icons.chat,
-                    ),
-                  ),
+      child: Scaffold(
+          body: _lobbyScreenBody,
+          floatingActionButtonLocation:
+              FloatingActionButtonLocation.endFloat,
+          floatingActionButton: Padding(
+            padding: EdgeInsets.only(bottom: 40, right: 20),
+            child: Badge(
+              showBadge: widget.newMessagesIndicator > 0,
+              badgeContent: Text(widget.newMessagesIndicator.toString(),
+                  style: TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.bold)),
+              child: FloatingActionButton(
+                onPressed: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) =>
+                              ChatWidget(widget.lobbySession)));
+                  setState(() {
+                    widget.newMessagesIndicator = 0;
+                  });
+                },
+                child: Icon(
+                  Icons.chat,
                 ),
-              ))),
+              ),
+            ),
+          )),
     );
   }
 
@@ -303,7 +299,11 @@ class _LobbyScreenState extends State<LobbyScreen> {
   }
 
   void startFinalVotes() {
-    final votingTimeLength = 5000; //5 seconds
+    final votingTimeLength = 15000; //5 seconds
+    _placesList = LobbyPlacesList(
+        places: widget.lobbySession.lobby!.placeRecommendations!,
+        mapController: mapController!,
+        lobbySession: widget.lobbySession);
     (_placesList as LobbyPlacesList).animateSheetToInitialSize();
     _stageTitle = EmptyContainer();
     _countDownTimer = Align(
@@ -326,7 +326,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
   }
 
   void countDownEnd() {
-    showLoadingDialog();
+    EasyLoading.show();
     setState(() {
       _countDownTimer = EmptyContainer();
       _placesList = EmptyContainer();

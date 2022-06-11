@@ -10,9 +10,8 @@ import 'package:activito/services/Server.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:load/load.dart';
 import 'package:location/location.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -21,15 +20,14 @@ import '../services/AuthService.dart';
 class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-        child: Scaffold(
+    return Scaffold(
       appBar: AppBar(
-        centerTitle: true,
-        title: Text('Activito'),
-        leading: AuthLeadingAppBarWidget(),
+    centerTitle: true,
+    title: Text('Activito'),
+    leading: AuthLeadingAppBarWidget(),
       ),
       body: HomeScreenBody(),
-    ));
+    );
   }
 }
 
@@ -96,30 +94,15 @@ class HomeScreenBody extends StatelessWidget {
                   ),
                 ),
                 EmptySpace(height: 40),
-                ActivitoButtonContainer(
-                  child: TextButton(
-                    onPressed: () => actionButtonPressed(context, "join"),
-                    child: Text('join'),
-                  ),
+                ActivitoButton(
+                  buttonText: "join",
+                  onTap: () => actionButtonPressed(context, "join"),
                 ),
                 EmptySpace(height: 10),
-                ActivitoButtonContainer(
-                  child: TextButton(
-                    child: Text('create lobby'),
-                    onPressed: () => actionButtonPressed(context, "create"),
-                  ),
+                ActivitoButton(
+                  buttonText: 'create lobby',
+                  onTap: () => actionButtonPressed(context, "create"),
                 ),
-                EmptySpace(height: 26),
-                ActivitoButtonContainer(
-                  child: TextButton(
-                      child: Text('friends'), onPressed: friendsButtonPressed),
-                ),
-                EmptySpace(height: 10),
-                ActivitoButtonContainer(
-                  child: TextButton(
-                      child: Text('settings'),
-                      onPressed: settingsButtonPressed),
-                )
               ],
             ),
           ),
@@ -147,7 +130,7 @@ class HomeScreenBody extends StatelessWidget {
   }
 
   Future<LobbySession> joinLobbyButtonPressed(String nickName) async {
-    showLoadingDialog();
+    EasyLoading.show();
     String enteredCode = lobbyCodeController.value.text;
     thisLobbyUser = LobbyUser(name: nickName);
     return await Server.joinLobby(
@@ -165,20 +148,16 @@ class HomeScreenBody extends StatelessWidget {
         icon2: Icons.local_activity,
         onTap1: () => Navigator.pop(context, 'food'),
         onTap2: () => Fluttertoast.showToast(msg: 'Under construction'));
-    showLoadingDialog();
+    EasyLoading.show();
     thisLobbyUser = LobbyUser(name: nickName, isLeader: true);
     return await Server.createLobby(
         lobbyType: lobbyType, lobbyUser: thisLobbyUser!);
   }
 
-  void friendsButtonPressed() {}
-
-  void settingsButtonPressed() {}
-
   Future<void> openUserLocationScreen(
       BuildContext context, LobbySession lobbySession) async {
     bool isPermissionGranted = await Permission.locationWhenInUse.isGranted;
-    hideLoadingDialog();
+    EasyLoading.dismiss();
     if (isPermissionGranted) {
       UserLocation currentUserLocation =
           UserLocation.fromDynamic(await Location.instance.getLocation());
@@ -265,7 +244,8 @@ class _AuthLeadingAppBarWidgetState extends State<AuthLeadingAppBarWidget> {
 
   Widget getUserConnectedWidget() {
     return PopupMenuButton(
-        child: CircleAvatar(
+        child: ClipRRect(
+          borderRadius: BorderRadius.all(Radius.circular(15)),
           child: CachedNetworkImage(
             imageUrl: AuthService.getCurrentUserProfilePic(),
             placeholder: (context, _) {

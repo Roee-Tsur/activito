@@ -1,24 +1,23 @@
 import 'package:activito/models/LobbySession.dart';
-import 'package:activito/models/UserLocation.dart';
 import 'package:activito/nice_widgets/CustomWidgets.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_share/flutter_share.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:load/load.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
-import '../models/Lobby.dart';
 import '../models/Place.dart';
 import '../services/Server.dart';
 
 class FinalResultsScreen extends StatelessWidget {
-  Place place;
-  LobbySession lobbySession;
+  final Place place;
+  final LobbySession lobbySession;
 
   FinalResultsScreen({required this.place, required this.lobbySession});
 
   @override
   Widget build(BuildContext context) {
+    EasyLoading.dismiss();
     return SafeArea(
       child: Scaffold(
         body: Stack(
@@ -86,14 +85,14 @@ class FinalResultsScreen extends StatelessWidget {
           iconData: Icons.web_asset,
           title: 'website',
           onTap: () {
-            launch(place.website!);
+            launchUrlString(place.website!);
           }));
     if (place.phoneNumber != null)
       iconButtons.add(_iconButton(
           iconData: Icons.phone,
           title: 'phone',
           onTap: () {
-            launch('tel:' + place.phoneNumber!);
+            launchUrlString('tel:' + place.phoneNumber!);
           }));
     iconButtons.add(_iconButton(
         iconData: Icons.share,
@@ -163,16 +162,16 @@ class FinalResultsScreen extends StatelessWidget {
 
   void _launchMaps({bool isDirections = false}) {
     if (isDirections) {
-      launch(
+      launchUrlString(
           "https://www.google.com/maps/dir/?api=1&destination=${place.location!.toUrlParameter()}&destination_place_id=${place.placeId}");
     } else
-      launch(
+      launchUrlString(
           "https://www.google.com/maps/search/?api=1&query=${place.location!.toUrlParameter()}&query_place_id=${place.placeId}");
   }
 
   endLobby(BuildContext context) {
     Navigator.of(context).pop();
-    hideLoadingDialog();
+    EasyLoading.dismiss();
     Server.exitLobby(lobbySession);
   }
 }

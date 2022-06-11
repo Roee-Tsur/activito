@@ -7,7 +7,7 @@ import '../screens/AuthScreens/SignUpScreen.dart';
 import '../services/AuthService.dart';
 
 class AuthScreen extends StatefulWidget {
-  bool isLogin;
+  final bool isLogin;
   String actionName = 'sign up';
 
   ///login = true || signup = false
@@ -40,46 +40,36 @@ class _AuthScreenState extends State<AuthScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-        child: Scaffold(
+    return Scaffold(
       appBar: AppBar(
-        leading: BackButton(
-          color: Colors.black,
-        ),
+    leading: BackButton(
+      color: Colors.black,
+    ),
       ),
       body: Center(
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.max,
-            children: [
-              widget.emailWidget ??= getInitialEmailButton(),
-              EmptySpace(height: 12),
-              ActivitoButtonContainer(
-                child: TextButton(
-                    onPressed: () => widget.googleAction(),
-                    child: Text('${widget.actionName} with google')),
-              ),
-              EmptySpace(height: 12),
-              /*ActivitoButtonContainer(
-                child: TextButton(
-                    onPressed: () => widget.facebookAction(),
-                    child: Text('${widget.actionName} with facebook')),
-              ),
-              EmptySpace(height: 12),*/
-              ActivitoButtonContainer(
-                  child: widget.isLogin
-                      ? TextButton(
-                          onPressed: () => continueToSignUp(),
-                          child:
-                              Text("new to ${Globals.appName}? sign up here!"),
-                        )
-                      : EmptyContainer())
-            ],
+    child: SingleChildScrollView(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.max,
+        children: [
+          widget.emailWidget ??= getInitialEmailButton(),
+          EmptySpace(height: 12),
+          ActivitoButton(
+            buttonText: '${widget.actionName} with google',
+            onTap: () => widget.googleAction(),
           ),
-        ),
+          EmptySpace(height: 12),
+          widget.isLogin
+              ? ActivitoButton(
+                  buttonText: "new to ${Globals.appName}? sign up here!",
+                  onTap: () => continueToSignUp(),
+                )
+              : EmptyContainer()
+        ],
       ),
-    ));
+    ),
+      ),
+    );
   }
 
   continueToSignUp() async {
@@ -88,10 +78,9 @@ class _AuthScreenState extends State<AuthScreen> {
     Navigator.pop(context, results);
   }
 
-  Widget getInitialEmailButton() => ActivitoButtonContainer(
-        child: TextButton(
-            onPressed: () => emailButtonPressed(),
-            child: Text('${widget.actionName} with email')),
+  Widget getInitialEmailButton() => ActivitoButton(
+        buttonText: '${widget.actionName} with email',
+        onTap: () => emailButtonPressed(),
       );
 
   void emailButtonPressed() {
@@ -121,28 +110,24 @@ class _AuthScreenState extends State<AuthScreen> {
         ),
         PasswordTextField(widget.passwordFieldController),
         EmptySpace(height: 12),
-        ActivitoButtonContainer(
-          widthRatio: 0.4,
-          child: TextButton(
-              onPressed: () {
-                if (!widget.emailFormKey.currentState!.validate()) return;
-                widget.emailAction(widget.emailFieldController.text,
-                    widget.passwordFieldController.text);
-              },
-              child: Text(widget.actionName)),
+        ActivitoButton(
+          buttonWidthRatio: 0.4,
+          onTap: () {
+            if (!widget.emailFormKey.currentState!.validate()) return;
+            widget.emailAction(widget.emailFieldController.text,
+                widget.passwordFieldController.text);
+          },
+          buttonText: widget.actionName,
         ),
         EmptySpace(height: 10),
         widget.isLogin
-            ? ActivitoButtonContainer(
-                widthRatio: 0.4,
-                child: TextButton(
-                    onPressed: () {
-                      if (!widget.emailFieldKey.currentState!.validate())
-                        return;
-                      AuthService.resetPassword(
-                          widget.emailFieldController.text);
-                    },
-                    child: Text('reset password')),
+            ? ActivitoButton(
+                buttonWidthRatio: 0.4,
+                buttonText: 'reset password',
+                onTap: () {
+                  if (!widget.emailFieldKey.currentState!.validate()) return;
+                  AuthService.resetPassword(widget.emailFieldController.text);
+                },
               )
             : EmptyContainer(),
         SizedBox(
@@ -157,7 +142,7 @@ class _AuthScreenState extends State<AuthScreen> {
 }
 
 class PasswordTextField extends StatefulWidget {
-  TextEditingController controller;
+  final TextEditingController controller;
 
   PasswordTextField(this.controller);
 

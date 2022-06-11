@@ -1,6 +1,7 @@
 import 'package:activito/main.dart';
 import 'package:activito/models/LobbySession.dart';
 import 'package:activito/screens/GalleryScreen.dart';
+import 'package:activito/screens/HomeScreen.dart';
 import 'package:activito/services/Server.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -156,7 +157,7 @@ class CustomDialogs {
                         Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
-                                builder: (context) => MyHomePage()));
+                                builder: (context) => HomeScreen()));
                       },
                       child: Text(
                         "exit",
@@ -173,7 +174,7 @@ class CustomDialogs {
 
 ///child should be TextFormField
 class ActivitoTextFieldContainer extends StatelessWidget {
-  Widget child;
+  final Widget child;
 
   ActivitoTextFieldContainer({required this.child});
 
@@ -190,27 +191,31 @@ class ActivitoTextFieldContainer extends StatelessWidget {
   }
 }
 
-class ActivitoButtonContainer extends StatelessWidget {
-  Widget child;
-  double? widthRatio;
+class ActivitoButton extends StatelessWidget {
+  final String buttonText;
+  final double? buttonWidthRatio;
+  final Function onTap;
 
-  ActivitoButtonContainer({required this.child, this.widthRatio});
+  ActivitoButton(
+      {required this.buttonText, required this.onTap, this.buttonWidthRatio});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).primaryColor.withAlpha(60),
-        borderRadius: BorderRadius.circular(14.0),
-      ),
-      width: MediaQuery.of(context).size.width * (widthRatio ??= 0.6),
-      child: child,
+    return SizedBox(
+      width: MediaQuery.of(context).size.width * (buttonWidthRatio ?? 0.6),
+      child: ElevatedButton(
+          style: ButtonStyle(
+              elevation: MaterialStateProperty.all(0),
+              backgroundColor: MaterialStateProperty.all(
+                  Theme.of(context).primaryColor.withOpacity(0.8))),
+          onPressed: () => onTap.call(),
+          child: Text(buttonText)),
     );
   }
 }
 
 class EmptySpace extends StatelessWidget {
-  double height;
+  final double height;
 
   EmptySpace({required this.height});
 
@@ -221,9 +226,9 @@ class EmptySpace extends StatelessWidget {
 }
 
 class RatingRow extends StatelessWidget {
-  num rating;
-  num? userRatingsTotal;
-  MainAxisAlignment? alignment;
+  final num rating;
+  final num? userRatingsTotal;
+  final MainAxisAlignment? alignment;
 
   RatingRow(
       {required this.rating,
@@ -249,7 +254,7 @@ class RatingRow extends StatelessWidget {
 }
 
 class PriceLevelRow extends StatelessWidget {
-  num priceLevel;
+  final num priceLevel;
 
   PriceLevelRow(this.priceLevel);
 
@@ -267,8 +272,8 @@ class PriceLevelRow extends StatelessWidget {
 }
 
 class ImagesRow extends StatefulWidget {
-  double imageSize;
-  List<String> imagesURLs;
+  final double imageSize;
+  final List<String> imagesURLs;
 
   ImagesRow({required this.imageSize, required this.imagesURLs});
 
@@ -300,7 +305,7 @@ class _ImagesRowState extends State<ImagesRow> {
             child: ClipRRect(
               borderRadius: BorderRadius.all(Radius.circular(14)),
               child: CachedNetworkImage(
-                fit: BoxFit.fill,
+                fit: BoxFit.cover,
                 imageUrl: element,
                 placeholder: (_, __) => Container(
                   color: Colors.grey.shade500,
@@ -333,7 +338,7 @@ class _ImagesRowState extends State<ImagesRow> {
 }
 
 class StageTitle extends StatelessWidget {
-  String title;
+  final String title;
 
   StageTitle({required this.title});
 

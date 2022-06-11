@@ -129,7 +129,6 @@ export const getPlacesRecommendations = functions.region("europe-west1").https.o
   });
 
   const config = URLHelper.getNearbySearchURL(userLocations, 1);
-  console.log("nearby search url: " + config);
   const requestResults = await axios(config);
 
 

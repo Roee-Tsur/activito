@@ -1,9 +1,7 @@
 import 'package:activito/models/LobbySession.dart';
 import 'package:activito/nice_widgets/EmptyContainer.dart';
 import 'package:activito/services/Server.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../models/Place.dart';
@@ -12,10 +10,10 @@ import 'CustomWidgets.dart';
 class LobbyPlacesList extends StatefulWidget {
   static String? selectedTile; //name of the place
   static int? votedIndex; //name of the place
-  List<Place> places;
-  GoogleMapController mapController;
-  LobbySession lobbySession;
-  DraggableScrollableController sheetController =
+  final List<Place> places;
+  final GoogleMapController mapController;
+  final LobbySession lobbySession;
+  final DraggableScrollableController sheetController =
       DraggableScrollableController();
 
   LobbyPlacesList({
@@ -34,6 +32,7 @@ class LobbyPlacesList extends StatefulWidget {
 }
 
 class _LobbyPlacesListState extends State<LobbyPlacesList> {
+
   @override
   Widget build(BuildContext context) {
     List<Widget> placesListTiles = [];
@@ -64,12 +63,12 @@ class _LobbyPlacesListState extends State<LobbyPlacesList> {
 }
 
 class PlaceListTile extends StatefulWidget {
-  late String id;
-  Place place;
+  late final String id;
+  final Place place;
   bool isSelected;
-  State parentState;
-  GoogleMapController mapController;
-  LobbySession lobbySession;
+  final State parentState;
+  final GoogleMapController mapController;
+  final LobbySession lobbySession;
 
   PlaceListTile(this.place, this.parentState, this.isSelected,
       this.mapController, this.lobbySession) {
@@ -81,6 +80,7 @@ class PlaceListTile extends StatefulWidget {
 }
 
 class _PlaceListTileState extends State<PlaceListTile> {
+
   @override
   Widget build(BuildContext context) {
     return Container(
