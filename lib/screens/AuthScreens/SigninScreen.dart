@@ -61,12 +61,6 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    ///dont know how to check if first login in facebook YET.
-    // if (AuthService.currentAdditionalUserInfo!.isNewUser) {
-    //   pickPhotoSkipSignUp();
-    //   return;
-    // }
-
     loginSuccessful(loginResults);
   }
 

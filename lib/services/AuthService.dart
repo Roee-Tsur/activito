@@ -122,12 +122,4 @@ class AuthService {
     if (currentUser != null)
       currentActivitoUser = await Server.createUser(currentUser!);
   }
-
-/*static addFriend(String friendId) {
-    Server.addFriend(currentUser!.uid, friendId);
-  }
-
-  static removeFriend(String friendId) {
-    Server.removeFriend(currentUser!.uid, friendId);
-  }*/
 }

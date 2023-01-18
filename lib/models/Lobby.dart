@@ -9,7 +9,6 @@ class Lobby extends ActivitoFirestoreModel {
       findingPlaces = 'finding places',
       votingStage = 'voting',
       finalVotesStage = 'final votes',
-      //countingVotes = 'counting votes' implemented without updating the lobby stage, after the final votes countdown ends
       finalStage = 'done';
 
   late String id;

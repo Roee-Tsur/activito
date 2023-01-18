@@ -243,7 +243,6 @@ class _LobbyScreenState extends State<LobbyScreen> {
 
     _stageTitle = StageTitle(title: 'start voting!');
 
-    //shows list
     _placesList = LobbyPlacesList(
         places: widget.lobbySession.lobby!.placeRecommendations!,
         mapController: mapController!,

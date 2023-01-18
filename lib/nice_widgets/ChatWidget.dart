@@ -1,4 +1,3 @@
-
 import 'package:activito/models/LobbySession.dart';
 import 'package:activito/models/Message.dart';
 import 'package:activito/nice_widgets/EmptyContainer.dart';
@@ -7,7 +6,7 @@ import 'package:activito/services/Server.dart';
 import 'package:flutter/material.dart';
 
 class ChatWidget extends StatefulWidget {
-  static double TEXT_SIZE = 8;
+  static const double TEXT_SIZE = 8;
 
   static late LobbySession _lobbySession;
 

@@ -10,7 +10,6 @@ void main() async {
 }
 
 Future<void> initializeApp() async {
-  ///TODO: fix facebook login, exit galleryscreen with swipe
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   AuthService.initUser();
@@ -21,12 +20,12 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-        title: 'Activito',
-        builder: EasyLoading.init(),
-        theme: ThemeData(
-          primarySwatch: Colors.purple,
-        ),
-        home: HomeScreen(),
-        );
+      title: 'Activito',
+      builder: EasyLoading.init(),
+      theme: ThemeData(
+        primarySwatch: Colors.purple,
+      ),
+      home: HomeScreen(),
+    );
   }
 }

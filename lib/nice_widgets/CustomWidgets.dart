@@ -1,4 +1,3 @@
-import 'package:activito/main.dart';
 import 'package:activito/models/LobbySession.dart';
 import 'package:activito/screens/GalleryScreen.dart';
 import 'package:activito/screens/HomeScreen.dart';
@@ -311,11 +310,6 @@ class _ImagesRowState extends State<ImagesRow> {
                   color: Colors.grey.shade500,
                 ),
                 errorWidget: (_, __, ___) {
-                  /*Future.delayed(
-                      Duration(seconds: 1),
-                      () => setState(() {
-                            widget.imagesURLs.remove(element);
-                          }));*/
                   return EmptyContainer();
                 },
               ),

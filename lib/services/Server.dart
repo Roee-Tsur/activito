@@ -14,8 +14,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
-import '../models/Lobby.dart';
-import '../models/Place.dart';
 import 'AuthService.dart';
 
 class Server {
@@ -86,52 +84,6 @@ class Server {
     AuthService.setProfilePic(
         await _storage.ref(serverPicPath).getDownloadURL());
   }
-
-  // static Future<Image> getCurrentUserProfilePic() async {
-  //   String filePath = (await getApplicationDocumentsDirectory()).path +
-  //       pathSeparator +
-  //       "profilePic.jpg";
-  //   File profilePicFile = File(filePath);
-  //
-  //   if (!(await profilePicFile.exists()))
-  //     return Image.asset("assets/defaultProfilePic.jpg");
-  //
-  //   return Image.file(profilePicFile);
-  // }
-  //
-  // static Future<Image> getUserProfilePic(String userID) async {
-  //   //not sure if the directory is correct...
-  //   String filePath = (await getTemporaryDirectory()).path +
-  //       pathSeparator +
-  //       "profilePic-$userID.jpg";
-  //   File profilePicFile = File(filePath);
-  //   String serverPicPath = "profilePics/$userID.jpg";
-  //   await _storage.ref(serverPicPath).writeToFile(profilePicFile);
-  //
-  //   return Image.file(profilePicFile);
-  // }
-  //
-  // /// this method deletes any existing profile picture. when user retries to load the pic Server will return null and default pic will be shown
-  // static Future deleteProfilePic() async {
-  //   await _storage
-  //       .ref("profilePics/${AuthService.getCurrentUserId()}.jpg")
-  //       .delete();
-  //   String localProfilePicPath =
-  //       (await getApplicationDocumentsDirectory()).path +
-  //           pathSeparator +
-  //           "profilePic.jpg";
-  //   File localProfilePicFile = File(localProfilePicPath);
-  //   await localProfilePicFile.delete();
-  // }
-  //
-  // static Future initProfilePic() async {
-  //   String filePath = (await getApplicationDocumentsDirectory()).path +
-  //       pathSeparator +
-  //       "profilePic.jpg";
-  //   File profilePicFile = File(filePath);
-  //   String serverPicPath = "profilePics/${AuthService.getCurrentUserId()}.jpg";
-  //   await _storage.ref(serverPicPath).writeToFile(profilePicFile);
-  // }
 
   static Stream<DocumentSnapshot> getLobbyEventListener(Lobby lobby) =>
       _lobbiesCollection.doc(lobby.id).snapshots();
@@ -235,16 +187,4 @@ class Server {
     LobbyPlacesList.selectedTile = null;
     LobbyPlacesList.votedIndex = null;
   }
-
-/*static void addFriend(String currentUserId, String friendId) {
-    _usersCollection.doc(currentUserId).update({
-      'friends': FieldValue.arrayUnion([friendId])
-    });
-  }
-
-  static void removeFriend(String currentUserId, String friendId) {
-    _usersCollection.doc(currentUserId).update({
-      'friends': FieldValue.arrayRemove([friendId])
-    });
-  }*/
 }
